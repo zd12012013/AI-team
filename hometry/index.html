@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>HomeTry — Весь мир — твой учебник</title>
+  <meta name="description" content="HomeTry — AI Discovery Learning Platform: учись, исследуя вещи вокруг себя.">
+  <meta name="theme-color" content="#5b3df5">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Шапка: логотип, слоган, режим, настройки -->
+  <header class="topbar">
+    <a class="logo" href="#/home" aria-label="HomeTry — на главную">
+      <span class="logo-mark">🔍</span>
+      <span class="logo-text">
+        <span class="logo-word">HOMETRY</span>
+        <span class="logo-slogan" data-i18n="app.slogan">Весь мир — твой учебник</span>
+      </span>
+    </a>
+    <div class="topbar-right">
+      <a class="mode-pill" id="modePill" href="#/settings"></a>
+      <a class="icon-btn" href="#/settings" aria-label="Настройки">⚙️</a>
+    </div>
+  </header>
+
+  <!-- Сюда app.js рисует текущий раздел -->
+  <main id="view" class="view" tabindex="-1"></main>
+
+  <!-- Нижняя навигация (на ПК превращается в меню сверху) -->
+  <nav class="bottomnav" aria-label="Разделы">
+    <a href="#/home" data-route="home"><span>🏠</span><b data-i18n="nav.home">Главная</b></a>
+    <a href="#/scan" data-route="scan"><span>📷</span><b data-i18n="nav.scan">Скан</b></a>
+    <a href="#/chain" data-route="chain"><span>🔗</span><b data-i18n="nav.chain">Цепочка</b></a>
+    <a href="#/collection" data-route="collection"><span>⭐</span><b data-i18n="nav.collection">Коллекция</b></a>
+    <a href="#/quiz" data-route="quiz"><span>🧠</span><b data-i18n="nav.quiz">Квиз</b></a>
+  </nav>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- Порядок важен: переводы → AI → приложение -->
+  <script src="js/i18n.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
