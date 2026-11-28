@@ -402,6 +402,21 @@ main.wrap { padding-bottom: 90px; }
 .plan .feat li:not(.off) > span:first-child:not(.yes) { color: var(--accent-dark); font-size: .8rem; }
 .demo-note { background: #fff4dc; color: #7a4a00; border-radius: 12px; padding: 10px 14px; font-size: .88rem; font-weight: 600; }
 .msg.limit-card { background: #fff4dc; }
+
+/* ---------- олимпиадные задачи ---------- */
+.ans-form input { width: 100%; font-size: 1.05rem; padding: 12px 14px; border-radius: var(--radius-sm); border: 1.5px solid var(--line); }
+.ans-form input:focus { border-color: var(--accent); outline: none; }
+.ans-form input.mono { font-family: ui-monospace, Menlo, Consolas, monospace; }
+.olymp { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); display: grid; gap: 8px; }
+.src { font-size: .82rem; color: var(--muted); margin: 0; }
+.hint { margin: 0; padding: 8px 12px; border-radius: 10px; background: #fff8e6; font-size: .92rem; }
+.solution { padding: 10px 14px; border-radius: 12px; background: var(--accent-light); font-size: .93rem; }
+.solution p { margin: 6px 0; }
+.samples { display: grid; gap: 8px; margin: 8px 0; }
+.samples .io { display: flex; gap: 10px; flex-wrap: wrap; font-size: .85rem; }
+.samples pre { margin: 4px 0 0; padding: 8px 12px; border-radius: 10px; background: var(--bg-2); font: 13px/1.4 ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; min-width: 120px; }
+.sol-details summary { cursor: pointer; color: var(--accent-dark); font-weight: 700; font-size: .9rem; margin: 6px 0; }
+.option[disabled] { opacity: .6; cursor: default; transform: none; }
 </style>
 </head>
 <body>
@@ -553,7 +568,7 @@ const LEVELS = [
   { id: "easy",     name: "Лёгкий",      color: "#22A06B", hint: "Определения и базовые факты" },
   { id: "medium",   name: "Средний",     color: "#2f80ed", hint: "Применение в типовых задачах" },
   { id: "hard",     name: "Сложный",     color: "#f2994a", hint: "Задачи в несколько шагов" },
-  { id: "olympiad", name: "Олимпиадный", color: "#d6336c", hint: "Нестандартные задачи" }
+  { id: "olympiad", name: "Олимпиадный", color: "#d6336c", hint: "Настоящие олимпиадные задачи" }
 ];
 const levelById = id => LEVELS.find(l => l.id === id);
 const PASS = 70; // тест считается сданным от 70%
@@ -865,9 +880,40 @@ async function renderQuiz(view, sid, grade, tid, level) {
       const kz = q.kz ? { ...q.kz, ...(q.kz.o ? { o: order.map(i => q.kz.o[i]) } : {}) } : undefined;
       return { ...q, o: order.map(i => q.o[i]), a: order.indexOf(q.a ?? 0), kz };
     });
-    quiz = { key, sid, grade: +grade, tid, level, topic: found.topic, questions, answers: Array(questions.length).fill(null), i: 0 };
+    quiz = { key, sid, grade: +grade, tid, level, topic: found.topic, questions, answers: Array(questions.length).fill(null), hints: [], sol: [], i: 0 };
   }
   quiz.finished ? drawResult(view) : drawQuestion(view);
+}
+
+/* --- Ответы: выбор варианта (o, a) или ввод (answer, accept) --- */
+const SEEN = "__solution_seen__";            // решение открыто до ответа — задача не засчитывается
+const normAns = s => String(s ?? "").trim().toLowerCase().replace(/[−–]/g, "-").replace(/,/g, ".").replace(/\s+/g, "");
+const isInput = q => q.answer !== undefined;
+function isRight(q, ans) {
+  if (ans === null || ans === undefined || ans === SEEN) return false;
+  if (isInput(q)) return [q.answer, ...(q.accept || [])].some(x => normAns(x) === normAns(ans));
+  return ans === q.a;
+}
+const rightText = q => (isInput(q) ? String(L(q, "answer")) : qOpts(q)[q.a]);
+const ansText = (q, ans) => (ans === SEEN ? tr("показано решение") : isInput(q) ? String(ans ?? "—") : qOpts(q)[ans]);
+
+/** Строка «Источник: …» под олимпиадной задачей. */
+function sourceLine(q) {
+  if (!q.source) return "";
+  if (q.source === "style") return `<p class="src">📎 ${tr("Источник:")} <i>${tr("в стиле олимпиады")}</i> <span class="badge-check">${tr("проверить")}</span></p>`;
+  const s = q.source;
+  const parts = [s.name, s.year, s.stage, s.grade ? tr("{g} класс", { g: s.grade }) : "", s.problem ? tr("задача {n}", { n: s.problem }) : ""].filter(Boolean);
+  return `<p class="src">📎 ${tr("Источник:")} ${esc(parts.join(", "))}${q.check ? ` <span class="badge-check">${tr("проверить")}</span>` : ""}</p>`;
+}
+const textHtml = s => String(s || "").split("\n").map(x => `<p>${esc(x)}</p>`).join("");
+function solutionHtml(q) {
+  return `<div class="solution"><b>${tr("Решение")}</b>${textHtml(L(q, "solution") || qExpl(q))}
+    ${q.solution_code ? `<p class="small muted">${tr("Решение на C++")}:</p>${codeBlock(q.solution_code)}` : ""}
+    <p><b>${tr("Ответ:")}</b> ${esc(rightText(q))}</p></div>`;
+}
+function samplesHtml(q) {
+  if (!q.samples?.length) return "";
+  return `<div class="samples">${q.samples.map(s => `<div class="io"><div><b>${tr("Пример ввода")}</b><pre>${esc(s.in)}</pre></div><div><b>${tr("Пример вывода")}</b><pre>${esc(s.out)}</pre></div></div>`).join("")}</div>`;
 }
 
 function drawQuestion(view) {
@@ -875,6 +921,11 @@ function drawQuestion(view) {
   const lv = levelById(quiz.level);
   const q = quiz.questions[quiz.i];
   const total = quiz.questions.length;
+  const ans = quiz.answers[quiz.i];
+  const seen = !!quiz.sol[quiz.i];
+  const hints = L(q, "hints") || [];
+  const shown = quiz.hints[quiz.i] || 0;
+  const locked = ans === SEEN;
   view.innerHTML = `
     <nav class="crumbs"><a href="#/s/${quiz.sid}">${subjectName(s)}</a> › <a href="#/s/${quiz.sid}/${quiz.grade}">${tr("{g} класс", { g: quiz.grade })}</a> › <a href="#/t/${quiz.sid}/${quiz.grade}/${quiz.tid}">${esc(topicTitle(quiz.topic))}</a></nav>
     ${modHead(s.emoji, esc(topicTitle(quiz.topic)), tr("Уровень: {l}", { l: levelName(lv) }), `#/t/${quiz.sid}/${quiz.grade}/${quiz.tid}`)}
@@ -883,19 +934,48 @@ function drawQuestion(view) {
       <div class="progress"><i style="width:${(quiz.i / total) * 100}%"></i></div>
       <h2>${esc(qText(q))}${noKzTag(q, "q")}</h2>
       ${q.code ? codeBlock(q.code) : ""}
-      <div class="options">
-        ${qOpts(q).map((opt, k) => `<button class="option ${q.code ? "mono" : ""} ${quiz.answers[quiz.i] === k ? "picked" : ""}" data-k="${k}">${esc(opt)}</button>`).join("")}
-      </div>
+      ${samplesHtml(q)}
+      ${isInput(q) ? `
+        <form class="ans-form" id="ansForm" autocomplete="off">
+          <input type="text" id="ansInput" placeholder="${tr("Введи ответ")}" value="${locked || ans === null ? "" : esc(ans)}" ${locked ? "disabled" : ""} ${q.samples ? 'class="mono"' : ""}>
+        </form>` : `
+        <div class="options">
+          ${qOpts(q).map((opt, k) => `<button class="option ${q.code ? "mono" : ""} ${ans === k ? "picked" : ""}" data-k="${k}" ${locked ? "disabled" : ""}>${esc(opt)}</button>`).join("")}
+        </div>`}
+      ${q.source || hints.length || q.solution ? `
+        <div class="olymp">
+          ${sourceLine(q)}
+          ${hints.slice(0, shown).map((h, i) => `<p class="hint">💡 <b>${tr("Подсказка {i}", { i: i + 1 })}:</b> ${esc(h)}</p>`).join("")}
+          <div class="row" style="gap:8px">
+            ${shown < hints.length ? `<button class="btn btn-sm btn-soft" id="hintBtn">${tr("💡 Подсказка")} ${shown + 1}/${hints.length}</button>` : ""}
+            <button class="btn btn-sm btn-ghost" id="solBtn">${seen ? tr("Скрыть решение") : tr("Показать решение")}</button>
+          </div>
+          ${seen ? solutionHtml(q) : ""}
+        </div>` : ""}
       <div class="row between" style="margin-top:16px">
         <button class="btn btn-ghost" id="prevQ" ${quiz.i === 0 ? "disabled" : ""}>${tr("← Назад")}</button>
-        <button class="btn btn-primary" id="nextQ" ${quiz.answers[quiz.i] === null ? "disabled" : ""}>${quiz.i === total - 1 ? tr("Завершить тест") : tr("Далее →")}</button>
+        <button class="btn btn-primary" id="nextQ" ${ans === null ? "disabled" : ""}>${quiz.i === total - 1 ? tr("Завершить тест") : tr("Далее →")}</button>
       </div>
     </section>`;
   $$(".option", view).forEach(b => b.onclick = () => { quiz.answers[quiz.i] = +b.dataset.k; drawQuestion(view); });
+  const inp = $("#ansInput", view);
+  if (inp) {
+    inp.oninput = () => { quiz.answers[quiz.i] = inp.value.trim() ? inp.value.trim() : null; $("#nextQ", view).disabled = quiz.answers[quiz.i] === null; };
+    $("#ansForm", view).onsubmit = e => { e.preventDefault(); if (quiz.answers[quiz.i] !== null) $("#nextQ", view).click(); };
+    if (!locked) inp.focus({ preventScroll: true });
+  }
+  const hb = $("#hintBtn", view);
+  if (hb) hb.onclick = () => { quiz.hints[quiz.i] = shown + 1; drawQuestion(view); };
+  const sb = $("#solBtn", view);
+  if (sb) sb.onclick = () => {
+    if (!seen && quiz.answers[quiz.i] === null) quiz.answers[quiz.i] = SEEN; // решение до ответа — без балла
+    quiz.sol[quiz.i] = !seen;
+    drawQuestion(view);
+  };
   $("#prevQ", view).onclick = () => { quiz.i--; drawQuestion(view); };
   $("#nextQ", view).onclick = () => {
-    if (quiz.i < total - 1) { quiz.i++; drawQuestion(view); return; }
-    const score = quiz.questions.filter((q, i) => quiz.answers[i] === q.a).length;
+    if (quiz.i < total - 1) { quiz.i++; drawQuestion(view); window.scrollTo({ top: 0 }); return; }
+    const score = quiz.questions.filter((q, i) => isRight(q, quiz.answers[i])).length;
     quiz.score = score;
     quiz.percent = saveResult(quiz.sid, quiz.grade, quiz.topic, quiz.level, score, total);
     quiz.finished = true;
@@ -911,7 +991,7 @@ function drawResult(view) {
   const pct = quiz.percent;
   const color = pct >= 80 ? "var(--ok)" : pct >= 50 ? "var(--warn)" : "var(--danger)";
   const msg = tr(pct >= 80 ? "Отличный результат! 🔥" : pct >= PASS ? "Тест сдан! Можно попробовать уровень сложнее 💪" : pct >= 50 ? "Почти! Разберём ошибки и попробуем снова 💪" : "Не страшно — разберём ошибки вместе 🌱");
-  const mistakes = quiz.questions.map((q, i) => ({ q, i, picked: quiz.answers[i] })).filter(x => x.picked !== x.q.a);
+  const mistakes = quiz.questions.map((q, i) => ({ q, i, picked: quiz.answers[i] })).filter(x => !isRight(x.q, x.picked));
   const nextLevel = LEVELS[LEVELS.findIndex(l => l.id === quiz.level) + 1];
 
   view.innerHTML = `
@@ -935,8 +1015,9 @@ function drawResult(view) {
         <div class="mistake">
           <p><b>${esc(qText(m.q))}</b></p>
           ${m.q.code ? codeBlock(m.q.code) : ""}
-          <p class="bad">${tr("Твой ответ:")} ${esc(qOpts(m.q)[m.picked])}</p>
-          <p class="good">${tr("Правильно:")} ${esc(qOpts(m.q)[m.q.a])}</p>
+          <p class="bad">${tr("Твой ответ:")} ${esc(ansText(m.q, m.picked))}</p>
+          <p class="good">${tr("Правильно:")} ${esc(rightText(m.q))}</p>
+          ${m.q.solution ? `${sourceLine(m.q)}<details class="sol-details"><summary>${tr("Показать решение")}</summary>${solutionHtml(m.q)}</details>` : ""}
           <button class="btn btn-sm btn-soft explain-btn" data-explain="${m.i}">${tr("🤖 Объясни")}</button>
         </div>`).join("")
       : `<p class="muted">${tr("Все ответы верные. Попробуй уровень сложнее!")}</p>`}
@@ -946,7 +1027,7 @@ function drawResult(view) {
   $$("[data-explain]", view).forEach(b => b.onclick = () => {
     const i = +b.dataset.explain;
     const q = quiz.questions[i];
-    openNovaAI({ ...q, picked: qOpts(q)[quiz.answers[i]] });
+    openNovaAI({ ...q, picked: ansText(q, quiz.answers[i]) });
   });
 }
 
