@@ -79,5 +79,19 @@
   "topics": 31,
   "questions": 372,
   "check": 22
+ },
+ "informatics": {
+  "grades": {
+   "5": 4,
+   "6": 4,
+   "7": 5,
+   "8": 4,
+   "9": 4,
+   "10": 5,
+   "11": 5
+  },
+  "topics": 31,
+  "questions": 372,
+  "check": 26
  }
 }
