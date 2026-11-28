@@ -6,7 +6,8 @@
   },
   "topics": 18,
   "questions": 216,
-  "check": 2
+  "check": 2,
+  "kz": 18
  },
  "algebra": {
   "grades": {
@@ -18,7 +19,8 @@
   },
   "topics": 50,
   "questions": 601,
-  "check": 8
+  "check": 8,
+  "kz": 0
  },
  "geometry": {
   "grades": {
@@ -30,7 +32,8 @@
   },
   "topics": 38,
   "questions": 456,
-  "check": 5
+  "check": 5,
+  "kz": 0
  },
  "physics": {
   "grades": {
@@ -42,7 +45,8 @@
   },
   "topics": 72,
   "questions": 866,
-  "check": 6
+  "check": 6,
+  "kz": 0
  },
  "chemistry": {
   "grades": {
@@ -54,7 +58,8 @@
   },
   "topics": 41,
   "questions": 492,
-  "check": 6
+  "check": 6,
+  "kz": 0
  },
  "biology": {
   "grades": {
@@ -66,7 +71,8 @@
   },
   "topics": 37,
   "questions": 444,
-  "check": 12
+  "check": 12,
+  "kz": 0
  },
  "geography": {
   "grades": {
@@ -78,7 +84,8 @@
   },
   "topics": 31,
   "questions": 372,
-  "check": 22
+  "check": 22,
+  "kz": 0
  },
  "informatics": {
   "grades": {
@@ -92,7 +99,8 @@
   },
   "topics": 31,
   "questions": 372,
-  "check": 26
+  "check": 26,
+  "kz": 0
  },
  "english": {
   "grades": {
@@ -106,7 +114,8 @@
   },
   "topics": 35,
   "questions": 420,
-  "check": 35
+  "check": 35,
+  "kz": 0
  },
  "history_kz": {
   "grades": {
@@ -120,6 +129,7 @@
   },
   "topics": 35,
   "questions": 420,
-  "check": 35
+  "check": 35,
+  "kz": 0
  }
 }
