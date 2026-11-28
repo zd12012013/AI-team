@@ -916,36 +916,9 @@ function renderWeakPoint(view) {
 
 /* =====================================================================
    9. AI-ПОМОЩНИК «ОБЪЯСНИ ОШИБКУ»
-   Без ключа: пояснение из данных вопроса + статьи Википедии (API, origin=*).
-   С ключом: Claude API прямо из браузера + инструмент веб-поиска.
+   Бесплатно и без ключей: пояснение из данных вопроса + статьи Википедии (API, origin=*).
    ===================================================================== */
-const AI_MODELS = {
-  "claude-opus-5-5": "Claude Opus 5.5 (лучшее качество)",
-  "claude-sonnet-5-5": "Claude Sonnet 5.5 (быстрее и дешевле)",
-  "claude-haiku-5-5": "Claude Haiku 5.5 (самый дешёвый)"
-};
-const AI_DEFAULT_MODEL = "claude-opus-5-5";
-
-const AI_SYSTEM_PROMPT = `Ты — доброжелательный репетитор образовательной платформы NOVA для школьников Казахстана (5–11 класс, обновлённое содержание образования).
-Ученик ошибся в тесте и просит объяснить ошибку. В первом сообщении ты получишь контекст: предмет, класс, тему, уровень сложности, вопрос, варианты, ответ ученика, правильный ответ и пояснение из учебных материалов.
-
-КАК ОБЪЯСНЯТЬ:
-- Пиши для возраста ученика: возраст ≈ класс + 6 лет. Для 5–7 класса — очень простые слова и бытовые примеры, для 10–11 — можно точнее и с терминами (каждый новый термин объясняй).
-- Учитывай уровень сложности: на лёгком — напомни определение или правило; на сложном и олимпиадном — разбери идею решения по шагам.
-- Сначала коротко объясни, почему выбранный ответ неверный (какое рассуждение к нему приводит и где ловушка), затем — как рассуждать правильно.
-- Подводи к ответу наводящими вопросами и подсказками. Если ученик просит решить новую задачу целиком — не решай полностью: дай план и первый шаг, предложи ему продолжить.
-- Отвечай кратко: 4–10 предложений. Можно использовать **жирный** и короткие списки. Без таблиц и LaTeX: формулы пиши обычным текстом (например, F = m · a, x² + 3x).
-
-ЧЕСТНОСТЬ:
-- Не выдумывай факты, даты, формулы и цитаты. Если не уверен — так и скажи.
-- Если пояснение из учебных материалов кажется тебе ошибочным, вежливо скажи об этом и посоветуй сверить с учебником или учителем.
-- ВСЕГДА давай 2–3 источника по теме: используй веб-поиск и выбирай надёжные сайты (энциклопедии, Википедия, образовательные порталы, учебники). Источники должны реально подтверждать объяснение.
-
-Пиши по-русски. Отвечай только на вопросы, связанные с учёбой; на остальное мягко возвращай к теме. Никогда не проси личные данные.`;
-
 const ai = { ctx: null, messages: [], busy: false };
-const settings = () => Object.assign({ apiKey: "", model: AI_DEFAULT_MODEL }, store.get("settings", {}));
-const hasKey = () => !!settings().apiKey;
 
 /** Простая разметка: **жирный**, списки, ссылки, переносы строк. */
 function md(text) {
@@ -983,9 +956,7 @@ function aiTyping() { return aiAdd("bot typing", "<span></span><span></span><spa
 function openAi(ctx) {
   ai.ctx = ctx; ai.messages = [];
   $("#aiSub").textContent = `${ctx.subject} · ${ctx.grade} класс · ${ctx.level}`;
-  const mode = $("#aiMode");
-  mode.textContent = hasKey() ? "Claude" : "без ключа";
-  mode.classList.toggle("on", hasKey());
+  $("#aiMode").textContent = "бесплатно";
   $("#aiBody").innerHTML = `
     <div class="ai-ctx">
       <p><b>${esc(ctx.q)}</b></p>
@@ -1004,23 +975,8 @@ function closeAi() {
   $("#aiBackdrop").classList.remove("open");
 }
 
-/** Первое объяснение: Claude, а при ошибке или без ключа — локальное. */
-async function firstExplanation() {
-  if (hasKey()) {
-    const c = ai.ctx;
-    const intro = `Контекст ошибки:
-Предмет: ${c.subject}. Класс: ${c.grade}. Тема: ${c.topic}. Уровень сложности: ${c.level}.
-Вопрос: ${c.q}
-Варианты: ${c.options.join(" | ")}
-Ответ ученика: ${c.picked}
-Правильный ответ: ${c.correct}
-Пояснение из учебных материалов: ${c.e}
-
-Объясни, почему мой ответ неверный и как правильно рассуждать. Дай 2–3 источника.`;
-    if (await askClaude(intro)) return;
-  }
-  await localExplanation();
-}
+/** Первое объяснение — из материалов NOVA. */
+async function firstExplanation() { await localExplanation(); }
 
 async function localExplanation() {
   const c = ai.ctx;
@@ -1031,7 +987,7 @@ async function localExplanation() {
     "Олимпиадный": "В олимпиадных задачах важна идея. Попробуй рассмотреть частный случай, нарисовать схему или проверить ответ подстановкой."
   }[c.level] || "";
   aiAdd("bot", md(`**Почему «${c.picked}» — неверно.**\nПравильный ответ: **${c.correct}**.\n\n${c.e}\n\n**Вспомни теорию:** ${c.topicExplain.replace(/\n/g, " ")}\n\n**Совет:** ${levelTip}`) +
-    `<p class="small muted" style="margin:6px 0 0">Режим без ключа: объяснение из материалов NOVA. Подключи ключ Claude в Настройках для подробного разбора.</p>`);
+    `<p class="small muted" style="margin:6px 0 0">Объяснение из материалов NOVA.</p>`);
   const t = aiTyping();
   const links = await wikiSearch(`${c.topic} ${c.subject === "Английский язык" ? "грамматика английского языка" : ""}`.trim());
   t.remove();
@@ -1067,77 +1023,8 @@ async function localFollowUp(question) {
   if (!found.length) found = [wikiSearchLink(question)];
   const extract = found[0]?.raw ? await wikiExtract(found[0].raw) : "";
   t.remove();
-  aiAdd("bot", (extract ? md(`Вот что пишет Википедия («${found[0].raw}»):\n${extract}`) : md("Без ключа я не могу ответить своими словами, но вот статьи, которые помогут разобраться.")) +
-    sourcesHtml(found) + `<p class="small muted" style="margin:6px 0 0">Для ответа на любой вопрос подключи ключ Claude в Настройках.</p>`);
-}
-
-/* --- Claude API (с ключом) --- */
-function webSearchTool(model) {
-  // У Opus и Sonnet — новая версия веб-поиска, у Haiku — базовая
-  return model.includes("haiku")
-    ? { type: "web_search_20250305", name: "web_search", max_uses: 3 }
-    : { type: "web_search_20260209", name: "web_search", max_uses: 3 };
-}
-
-/** Отправляет сообщение в Claude. Возвращает true, если ответ получен. */
-async function askClaude(userText) {
-  const st = settings();
-  const model = st.model || AI_DEFAULT_MODEL;
-  ai.messages.push({ role: "user", content: userText });
-  const t = aiTyping();
-  try {
-    const headers = {
-      "content-type": "application/json",
-      "x-api-key": st.apiKey,
-      "anthropic-version": "2026-10-21",
-      // Разрешает запрос прямо из браузера. Ключ хранится только в этом браузере.
-      "anthropic-dangerous-direct-browser-access": "true"
-    };
-    const base = { model, max_tokens: 16000, system: AI_SYSTEM_PROMPT, tools: [webSearchTool(model)], output_config: { effort: "low" } };
-    if (!model.includes("haiku")) { headers["anthropic-beta"] = "server-side-fallback-2026-07-01"; base.fallbacks = "default"; }
-
-    const call = async (useFallback) => {
-      const body = { ...base, messages: ai.messages };
-      const h = { ...headers };
-      if (!useFallback) { delete body.fallbacks; delete h["anthropic-beta"]; }
-      return fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: h, body: JSON.stringify(body) });
-    };
-
-    let texts = [], sources = [];
-    for (let step = 0; step < 4; step++) {
-      let res = await call(true);
-      if (res.status === 400) res = await call(false); // если запасной вариант не поддерживается
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error?.message || "HTTP " + res.status);
-      if (data.stop_reason === "refusal") throw new Error("Claude отказался отвечать на этот запрос");
-      ai.messages.push({ role: "assistant", content: data.content });
-      for (const b of data.content || []) {
-        if (b.type === "text") {
-          texts.push(b.text);
-          (b.citations || []).forEach(c => c.url && sources.push({ title: c.title || c.url, url: c.url }));
-        }
-        if (b.type === "web_search_tool_result" && Array.isArray(b.content)) {
-          b.content.forEach(r => r.url && sources.push({ title: r.title || r.url, url: r.url, fromSearch: true }));
-        }
-      }
-      if (data.stop_reason !== "pause_turn") break; // длинный поиск — продолжаем ход
-    }
-    t.remove();
-    // Сначала цитаты из ответа, затем результаты поиска; без повторов, не больше 3
-    const seen = new Set();
-    const uniq = [...sources.filter(s => !s.fromSearch), ...sources.filter(s => s.fromSearch)]
-      .filter(s => !seen.has(s.url) && seen.add(s.url)).slice(0, 3);
-    const text = texts.join("").trim() || "Не получилось сформулировать ответ.";
-    aiAdd("bot", md(text) + sourcesHtml(uniq.length ? uniq : [wikiSearchLink(ai.ctx.topic)], "🔗 Источники"));
-    return true;
-  } catch (e) {
-    t.remove();
-    ai.messages.pop(); // убираем неудачное сообщение
-    $("#aiMode").textContent = "без ключа";
-    $("#aiMode").classList.remove("on");
-    aiAdd("bot", `<span class="small">⚠️ Claude недоступен (${esc(e.message)}). Переключаюсь на режим без ключа.</span>`);
-    return false;
-  }
+  aiAdd("bot", (extract ? md(`Вот что пишет Википедия («${found[0].raw}»):\n${extract}`) : md("Вот статьи, которые помогут разобраться.")) +
+    sourcesHtml(found));
 }
 
 /* Обработчики панели */
@@ -1152,8 +1039,7 @@ $("#aiForm").onsubmit = async e => {
   input.value = "";
   aiAdd("me", esc(text));
   ai.busy = true;
-  const claudeOn = hasKey() && $("#aiMode").classList.contains("on");
-  if (!(claudeOn && await askClaude(text))) await localFollowUp(text);
+  await localFollowUp(text);
   ai.busy = false;
 };
 
@@ -1161,36 +1047,13 @@ $("#aiForm").onsubmit = async e => {
    10. НАСТРОЙКИ
    ===================================================================== */
 function renderSettings(view) {
-  const st = settings();
   view.innerHTML = `
-    ${modHead("⚙️", "Настройки", "AI-помощник и данные")}
-    <section class="card">
-      <h3>🤖 AI-помощник «Объясни ошибку»</h3>
-      <p class="small muted">Без ключа помощник показывает пояснение из материалов NOVA и статьи Википедии. С ключом Claude он объясняет ошибку под твой класс, отвечает на вопросы и ищет источники в интернете.</p>
-      <form id="setForm" autocomplete="off">
-        <label class="field"><span>API-ключ Claude (необязательно)</span><input type="password" name="apiKey" placeholder="sk-ant-..." value="${esc(st.apiKey)}"></label>
-        <label class="field"><span>Модель</span><select name="model">${Object.entries(AI_MODELS).map(([k, v]) => `<option value="${k}" ${st.model === k ? "selected" : ""}>${v}</option>`).join("")}</select></label>
-        <p class="small muted">🔒 Ключ хранится только в localStorage этого браузера и отправляется напрямую в api.anthropic.com. Не вводи его на чужом компьютере. Запросы оплачиваются с аккаунта владельца ключа.</p>
-        <div class="row">
-          <button class="btn btn-primary" type="submit">Сохранить</button>
-          ${st.apiKey ? `<button class="btn btn-ghost btn-danger" type="button" id="delKey">Удалить ключ</button>` : ""}
-        </div>
-      </form>
-    </section>
+    ${modHead("⚙️", "Настройки", "Данные в этом браузере")}
     <section class="card">
       <h3>🗂️ Данные</h3>
-      <p class="small muted">Прогресс, история тестов, задачи и команда хранятся в этом браузере.</p>
+      <p class="small muted">Прогресс, история тестов, задачи и команда хранятся только в этом браузере. NOVA не использует платные сервисы и ключи.</p>
       <button class="btn btn-ghost btn-danger" id="resetProgress">Сбросить прогресс и историю тестов</button>
     </section>`;
-  $("#setForm", view).onsubmit = e => {
-    e.preventDefault();
-    const f = new FormData(e.target);
-    store.set("settings", { apiKey: f.get("apiKey").trim(), model: f.get("model") });
-    toast("Настройки сохранены ✓");
-    renderSettings(view);
-  };
-  const del = $("#delKey", view);
-  if (del) del.onclick = () => { store.set("settings", { ...settings(), apiKey: "" }); toast("Ключ удалён"); renderSettings(view); };
   $("#resetProgress", view).onclick = () => {
     if (!confirm("Удалить весь прогресс по темам и историю тестов?")) return;
     store.set("progress", {}); store.set("history", []);
@@ -1635,6 +1498,7 @@ function renderTeam(view) {
    16. СТАРТ: загружаем оглавление данных и открываем нужный раздел
    ===================================================================== */
 (async function init() {
+  try { localStorage.removeItem("nova.settings"); } catch (e) {} // старый ключ API больше не используется
   try { INDEX = (await loadJson("index")) || {}; }
   catch (e) { INDEX = {}; console.warn("Нет data/index.json — запусти tools/build-data.py", e); }
   router();

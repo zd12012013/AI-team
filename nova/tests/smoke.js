@@ -56,12 +56,12 @@ const SHOTS = process.env.SHOTS || "";
   ok(n >= 3, `Тест: ${n} вопросов, есть результат`);
   await shot("result");
 
-  // «Объясни» без ключа
+  // «Объясни»
   const explain = await page.$("[data-explain]");
   if (explain) {
     await explain.click();
     await page.waitForSelector("#aiPanel.open .msg.bot");
-    ok((await page.textContent("#aiBody")).includes("Правильно"), "Объясни: пояснение без ключа");
+    ok((await page.textContent("#aiBody")).includes("Правильно"), "Объясни: пояснение из материалов");
     await page.waitForTimeout(1500);
     await shot("ai");
     await page.click("#aiClose");
@@ -97,8 +97,9 @@ const SHOTS = process.env.SHOTS || "";
   await shot("weak");
 
   // Прочее
-  await go("#/settings", "#setForm");
-  ok(true, "Настройки открываются");
+  await go("#/settings", "#resetProgress");
+  ok(!(await page.$("input[type=password]")), "Настройки: поля API-ключа нет");
+  ok(!(await page.content()).includes("api.anthropic.com"), "Нет запросов к платным API");
   await go("#/s/chemistry", ".mod-head");
   ok(true, "Неготовый предмет показывает заглушку");
   for (const [h, sel] of [["#/hometry", ".ht-card"], ["#/tasks", "#taskForm"], ["#/team", ".person"]]) { await go(h, sel); ok(true, h + " работает"); }
