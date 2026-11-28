@@ -1,0 +1,1182 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NOVA Lite — Smart Student Platform</title>
+<meta name="description" content="NOVA Lite: тесты и анализ ошибок, объяснения через предметы, планировщик заданий и поиск команды.">
+<meta name="theme-color" content="#0b0d14">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>">
+<style>
+/* =====================================================================
+   1. ПЕРЕМЕННЫЕ И БАЗА
+   ===================================================================== */
+:root {
+  --bg: #0b0d14;
+  --bg-2: #11141e;
+  --card: #161a26;
+  --card-2: #1c2130;
+  --line: #262c3d;
+  --text: #eef0f7;
+  --muted: #8d93a8;
+  --accent: #8b7bff;
+  --accent-2: #5ee7df;
+  --ok: #3ddc97;
+  --warn: #ffb347;
+  --danger: #ff5c7a;
+  --radius: 20px;
+  --radius-sm: 12px;
+  --shadow: 0 10px 30px rgba(0, 0, 0, .35);
+  --ease: cubic-bezier(.2, .8, .2, 1);
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; min-height: 100vh;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--text); line-height: 1.5;
+  background:
+    radial-gradient(700px 400px at 90% -10%, rgba(139, 123, 255, .18), transparent 60%),
+    radial-gradient(600px 400px at -10% 30%, rgba(94, 231, 223, .08), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
+}
+h1, h2, h3, h4 { margin: 0 0 .5em; line-height: 1.2; letter-spacing: -.01em; }
+p { margin: 0 0 .8em; }
+a { color: var(--accent); }
+button, input, select, textarea { font: inherit; color: inherit; }
+.muted { color: var(--muted); }
+.small { font-size: .85rem; }
+.hidden { display: none !important; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+
+/* =====================================================================
+   2. ШАПКА
+   ===================================================================== */
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  background: rgba(11, 13, 20, .78); backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
+}
+.topbar .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+.logo { display: flex; flex-direction: column; text-decoration: none; color: var(--text); }
+.logo b { font-size: 1.35rem; letter-spacing: .06em; font-weight: 800; }
+.logo b span { color: var(--accent); display: inline-block; transition: transform .6s var(--ease); }
+.logo:hover b span { transform: rotate(180deg) scale(1.15); }
+.logo small { font-size: .62rem; letter-spacing: .22em; color: var(--muted); font-weight: 600; }
+.top-nav { display: none; gap: 4px; }
+.top-nav a {
+  text-decoration: none; color: var(--muted); font-size: .9rem; font-weight: 600;
+  padding: 8px 12px; border-radius: 999px; transition: background .2s, color .2s;
+}
+.top-nav a:hover { color: var(--text); background: var(--card); }
+.top-nav a.active { color: var(--text); background: var(--card-2); }
+
+/* =====================================================================
+   3. ОБЩИЕ КОМПОНЕНТЫ: карточки, кнопки, поля, чипы
+   ===================================================================== */
+main { padding: 20px 0 60px; }
+.view { animation: viewIn .45s var(--ease); }
+@keyframes viewIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+.card {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 18px; margin-bottom: 16px;
+}
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: 1px solid var(--line); background: var(--card-2); color: var(--text);
+  padding: 11px 16px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;
+  text-decoration: none; transition: transform .15s var(--ease), background .2s, border-color .2s, opacity .2s;
+}
+.btn:hover { border-color: #3a4260; transform: translateY(-1px); }
+.btn:active { transform: scale(.97); }
+.btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #0b0d14; }
+.btn-primary:hover { background: #a194ff; border-color: #a194ff; }
+.btn-ghost { background: transparent; }
+.btn-danger { color: var(--danger); }
+.btn-sm { padding: 7px 11px; font-size: .85rem; border-radius: 10px; }
+.btn-block { width: 100%; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.row.between { justify-content: space-between; }
+
+label.field { display: block; margin-bottom: 12px; }
+label.field > span { display: block; font-size: .82rem; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+input[type=text], input[type=search], input[type=datetime-local], select, textarea {
+  width: 100%; background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--radius-sm);
+  padding: 11px 13px; transition: border-color .2s, box-shadow .2s; color-scheme: dark;
+}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(139, 123, 255, .2); }
+textarea { resize: vertical; min-height: 70px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  font-size: .78rem; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+  background: var(--card-2); border: 1px solid var(--line); color: var(--muted);
+}
+button.chip { cursor: pointer; transition: all .2s; }
+button.chip:hover { color: var(--text); }
+button.chip.active, .chip.on { background: rgba(139, 123, 255, .16); border-color: var(--accent); color: var(--text); }
+
+.seg { display: inline-flex; background: var(--bg-2); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+.seg button { border: 0; background: transparent; padding: 7px 13px; border-radius: 999px; cursor: pointer; color: var(--muted); font-weight: 600; font-size: .85rem; transition: all .2s; }
+.seg button.active { background: var(--card-2); color: var(--text); }
+
+.empty {
+  text-align: center; padding: 36px 18px; border: 1px dashed var(--line); border-radius: var(--radius);
+  color: var(--muted); background: rgba(22, 26, 38, .5);
+}
+.empty .e-icon { font-size: 2.4rem; display: block; margin-bottom: 8px; }
+.empty b { color: var(--text); display: block; margin-bottom: 4px; }
+
+.progress { height: 8px; background: var(--bg-2); border-radius: 999px; overflow: hidden; }
+.progress > i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius: inherit; transition: width .6s var(--ease); }
+
+/* Шапка модуля с кнопкой «Назад» */
+.mod-head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.back {
+  width: 42px; height: 42px; flex: none; display: grid; place-items: center;
+  border-radius: 12px; background: var(--card); border: 1px solid var(--line);
+  color: var(--text); text-decoration: none; font-size: 1.2rem; transition: transform .2s var(--ease), border-color .2s;
+}
+.back:hover { transform: translateX(-3px); border-color: var(--accent); }
+.mod-head h1 { margin: 0; font-size: 1.45rem; }
+.mod-head p { margin: 0; color: var(--muted); font-size: .9rem; }
+
+.toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); opacity: 0;
+  background: var(--card-2); border: 1px solid var(--line); padding: 12px 18px; border-radius: 14px;
+  box-shadow: var(--shadow); transition: all .3s var(--ease); pointer-events: none; z-index: 50; font-weight: 600;
+  max-width: calc(100% - 32px); text-align: center;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* =====================================================================
+   4. ГЛАВНАЯ
+   ===================================================================== */
+.hero { padding: 18px 0 8px; }
+.hero .eyebrow { font-size: .72rem; letter-spacing: .22em; color: var(--accent-2); font-weight: 700; margin-bottom: 10px; }
+.hero h1 { font-size: clamp(2rem, 7vw, 3.2rem); font-weight: 800; margin-bottom: 12px; }
+.hero h1 em { font-style: normal; background: linear-gradient(90deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero p { color: var(--muted); max-width: 520px; }
+
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 18px 0; }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; }
+.stat b { display: block; font-size: 1.5rem; font-weight: 800; }
+.stat span { font-size: .75rem; color: var(--muted); }
+
+.modules { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.module {
+  position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 6px;
+  min-height: 150px; padding: 18px; border-radius: var(--radius); text-decoration: none; color: var(--text);
+  background: var(--card); border: 1px solid var(--line);
+  transition: transform .35s var(--ease), border-color .3s, box-shadow .3s;
+}
+.module::after {
+  content: ""; position: absolute; inset: auto -40px -40px auto; width: 130px; height: 130px; border-radius: 50%;
+  background: var(--glow); opacity: .18; filter: blur(6px); transition: transform .5s var(--ease), opacity .3s;
+}
+.module:hover { transform: translateY(-4px); border-color: var(--glow); box-shadow: 0 14px 34px rgba(0, 0, 0, .4); }
+.module:hover::after { transform: scale(1.5); opacity: .3; }
+.module .m-emoji { font-size: 2rem; align-self: flex-start; transition: transform .35s var(--ease); }
+.module:hover .m-emoji { transform: scale(1.15) rotate(-6deg); }
+.module h3 { margin: auto 0 0; font-size: 1.15rem; }
+.module p { margin: 0; font-size: .85rem; color: var(--muted); }
+
+/* =====================================================================
+   5. WEAKPOINT
+   ===================================================================== */
+.subj-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 18px; }
+.subj {
+  text-align: left; cursor: pointer; padding: 16px; border-radius: var(--radius); background: var(--card);
+  border: 1px solid var(--line); transition: transform .25s var(--ease), border-color .2s;
+}
+.subj:hover { transform: translateY(-3px); border-color: var(--accent); }
+.subj .s-emoji { font-size: 1.7rem; }
+.subj b { display: block; margin: 6px 0 2px; font-size: 1.05rem; }
+.subj small { color: var(--muted); }
+
+.q-top { display: flex; justify-content: space-between; color: var(--muted); font-size: .85rem; margin-bottom: 8px; }
+.question h2 { font-size: 1.2rem; margin: 14px 0 16px; }
+.options { display: grid; gap: 8px; }
+.option {
+  text-align: left; padding: 13px 15px; border-radius: var(--radius-sm); background: var(--bg-2);
+  border: 1px solid var(--line); cursor: pointer; transition: all .2s var(--ease);
+}
+.option:hover { border-color: #3a4260; transform: translateX(3px); }
+.option.picked { border-color: var(--accent); background: rgba(139, 123, 255, .14); }
+
+.result-top { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.ring {
+  --p: 0; width: 120px; height: 120px; border-radius: 50%; display: grid; place-items: center; flex: none;
+  background: conic-gradient(var(--ring-c, var(--accent)) calc(var(--p) * 1%), var(--bg-2) 0);
+}
+.ring > div { width: 92px; height: 92px; border-radius: 50%; background: var(--card); display: grid; place-items: center; font-size: 1.7rem; font-weight: 800; }
+.mistake { border-left: 3px solid var(--danger); padding: 10px 12px; background: var(--bg-2); border-radius: 0 12px 12px 0; margin-bottom: 10px; }
+.mistake p { margin: 4px 0; font-size: .92rem; }
+.mistake .bad { color: var(--danger); }
+.mistake .good { color: var(--ok); }
+.topic-row { margin-bottom: 12px; }
+.topic-row .row { justify-content: space-between; font-size: .9rem; margin-bottom: 5px; }
+.weak { padding: 12px 14px; border-radius: 14px; background: rgba(255, 179, 71, .08); border: 1px solid rgba(255, 179, 71, .3); margin-bottom: 8px; }
+.weak b { color: var(--warn); }
+.hist-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.hist-item:last-child { border-bottom: 0; }
+.pct { font-weight: 800; }
+.pct.good { color: var(--ok); } .pct.mid { color: var(--warn); } .pct.bad { color: var(--danger); }
+
+/* =====================================================================
+   6. HOMETRY
+   ===================================================================== */
+.ht-grid { display: grid; gap: 12px; }
+.ht-card {
+  text-align: left; cursor: pointer; display: flex; gap: 14px; align-items: flex-start; padding: 16px;
+  border-radius: var(--radius); background: var(--card); border: 1px solid var(--line);
+  transition: transform .25s var(--ease), border-color .2s;
+}
+.ht-card:hover { transform: translateY(-3px); border-color: var(--accent-2); }
+.ht-card .ht-emoji { font-size: 2rem; width: 52px; height: 52px; flex: none; display: grid; place-items: center; background: var(--bg-2); border-radius: 14px; }
+.ht-card b { display: block; font-size: 1.05rem; }
+.ht-card p { margin: 4px 0 8px; font-size: .88rem; color: var(--muted); }
+.explain { font-size: 1.02rem; }
+.items { display: grid; gap: 8px; margin-top: 10px; }
+.item { display: flex; gap: 10px; align-items: flex-start; background: var(--bg-2); border-radius: 12px; padding: 10px 12px; font-size: .92rem; }
+.item span:first-child { font-size: 1.3rem; }
+.need { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.steps { counter-reset: s; list-style: none; padding: 0; margin: 0; }
+.steps li { counter-increment: s; position: relative; padding: 0 0 12px 40px; }
+.steps li::before {
+  content: counter(s); position: absolute; left: 0; top: 0; width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--card-2); border: 1px solid var(--line); font-weight: 700; font-size: .85rem;
+}
+.conclusion { background: linear-gradient(135deg, rgba(94, 231, 223, .12), rgba(139, 123, 255, .12)); border: 1px solid rgba(94, 231, 223, .3); border-radius: 16px; padding: 14px 16px; }
+.safety { font-size: .85rem; color: var(--warn); margin-top: 10px; }
+
+/* =====================================================================
+   7. TASKPLANNER
+   ===================================================================== */
+.form-grid { display: grid; gap: 0 12px; }
+.task {
+  display: flex; gap: 12px; align-items: flex-start; padding: 14px; margin-bottom: 10px;
+  background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--line);
+  border-radius: 16px; transition: transform .2s var(--ease), opacity .3s, border-color .2s;
+  animation: viewIn .35s var(--ease);
+}
+.task:hover { transform: translateX(2px); }
+.task.overdue { border-left-color: var(--danger); background: linear-gradient(90deg, rgba(255, 92, 122, .08), var(--card) 40%); }
+.task.urgent { border-left-color: var(--warn); background: linear-gradient(90deg, rgba(255, 179, 71, .08), var(--card) 40%); }
+.task.done { opacity: .55; border-left-color: var(--ok); }
+.task.done .t-title { text-decoration: line-through; }
+.check {
+  width: 26px; height: 26px; flex: none; border-radius: 8px; border: 2px solid #3a4260; background: transparent;
+  cursor: pointer; display: grid; place-items: center; transition: all .2s; color: #0b0d14; font-weight: 900; font-size: .85rem;
+}
+.check:hover { border-color: var(--ok); }
+.task.done .check { background: var(--ok); border-color: var(--ok); }
+.t-body { flex: 1; min-width: 0; }
+.t-title { font-weight: 700; word-break: break-word; }
+.t-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; font-size: .8rem; }
+.t-actions { display: flex; gap: 4px; }
+.icon-btn { border: 0; background: transparent; cursor: pointer; padding: 6px; border-radius: 8px; font-size: 1rem; transition: background .2s; }
+.icon-btn:hover { background: var(--card-2); }
+.prio-high { color: var(--danger); border-color: rgba(255, 92, 122, .4); }
+.prio-medium { color: var(--warn); border-color: rgba(255, 179, 71, .4); }
+.prio-low { color: var(--ok); border-color: rgba(61, 220, 151, .4); }
+.deadline.overdue { color: var(--danger); border-color: rgba(255, 92, 122, .5); }
+.deadline.urgent { color: var(--warn); border-color: rgba(255, 179, 71, .5); }
+
+/* =====================================================================
+   8. TEAMSYNC
+   ===================================================================== */
+.tabs { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; }
+.tabs button { flex: none; border: 1px solid var(--line); background: var(--card); padding: 9px 14px; border-radius: 999px; cursor: pointer; font-weight: 600; color: var(--muted); transition: all .2s; }
+.tabs button.active { color: var(--text); border-color: var(--accent); background: rgba(139, 123, 255, .14); }
+.tabs button span { font-size: .75rem; background: var(--card-2); padding: 1px 7px; border-radius: 999px; margin-left: 4px; }
+.people { display: grid; gap: 12px; }
+.person {
+  display: flex; flex-direction: column; gap: 8px; padding: 16px; border-radius: var(--radius);
+  background: var(--card); border: 1px solid var(--line); transition: transform .25s var(--ease), border-color .2s;
+  animation: viewIn .35s var(--ease);
+}
+.person:hover { transform: translateY(-3px); border-color: #3a4260; }
+.person.mine { border-color: rgba(94, 231, 223, .45); }
+.p-head { display: flex; align-items: center; gap: 12px; }
+.avatar { width: 46px; height: 46px; flex: none; border-radius: 14px; display: grid; place-items: center; font-weight: 800; font-size: 1.1rem; color: #0b0d14; }
+.p-head b { display: block; }
+.p-head small { color: var(--muted); }
+.person p { margin: 0; font-size: .9rem; }
+.person .label { color: var(--muted); font-size: .78rem; font-weight: 600; }
+.person .btn { margin-top: auto; }
+.in-team { background: rgba(61, 220, 151, .12); border-color: rgba(61, 220, 151, .5); color: var(--ok); }
+
+/* =====================================================================
+   9. АДАПТИВНОСТЬ
+   ===================================================================== */
+@media (min-width: 720px) {
+  main { padding-top: 32px; }
+  .top-nav { display: flex; }
+  .module { min-height: 190px; padding: 24px; }
+  .module .m-emoji { font-size: 2.6rem; }
+  .module h3 { font-size: 1.35rem; }
+  .module p { font-size: .95rem; }
+  .stat b { font-size: 1.9rem; }
+  .ht-grid, .people { grid-template-columns: repeat(2, 1fr); }
+  .form-grid { grid-template-columns: 2fr 1fr; }
+  .subj-grid { grid-template-columns: repeat(4, 1fr); }
+}
+@media (min-width: 1000px) {
+  .people { grid-template-columns: repeat(3, 1fr); }
+  .two-col { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; align-items: start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- ================= ШАПКА ================= -->
+<header class="topbar">
+  <div class="wrap">
+    <a class="logo" href="#/" aria-label="NOVA — на главную">
+      <b><span>✦</span> NOVA</b>
+      <small>SMART STUDENT PLATFORM</small>
+    </a>
+    <nav class="top-nav" aria-label="Модули">
+      <a href="#/weakpoint" data-nav="weakpoint">🧠 WeakPoint</a>
+      <a href="#/hometry" data-nav="hometry">🔍 HomeTry</a>
+      <a href="#/tasks" data-nav="tasks">📅 TaskPlanner</a>
+      <a href="#/team" data-nav="team">🤝 TeamSync</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap"><div id="app"></div></main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+
+/* =====================================================================
+   1. ХРАНИЛИЩЕ (localStorage) И УТИЛИТЫ
+   ===================================================================== */
+const store = {
+  get(key, fallback) {
+    try { const v = localStorage.getItem("nova." + key); return v === null ? fallback : JSON.parse(v); }
+    catch (e) { return fallback; }
+  },
+  set(key, value) {
+    try { localStorage.setItem("nova." + key, JSON.stringify(value)); }
+    catch (e) { toast("Не удалось сохранить: память браузера недоступна"); }
+  }
+};
+
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+/** Экранирование текста перед вставкой в HTML (защита от «поломки» вёрстки). */
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const pctClass = p => (p >= 80 ? "good" : p >= 50 ? "mid" : "bad");
+const fmtDate = iso => new Date(iso).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => t.classList.remove("show"), 2400);
+}
+
+/** Шапка модуля с кнопкой «Назад». */
+function modHead(emoji, title, subtitle, backHref = "#/") {
+  return `<div class="mod-head">
+      <a class="back" href="${backHref}" aria-label="Назад">←</a>
+      <div><h1>${emoji} ${title}</h1><p>${subtitle}</p></div>
+    </div>`;
+}
+
+function emptyState(icon, title, hint) {
+  return `<div class="empty"><span class="e-icon">${icon}</span><b>${title}</b>${hint}</div>`;
+}
+
+/* =====================================================================
+   2. ДАННЫЕ: ВОПРОСЫ WEAKPOINT
+   Формат: { t: тема, q: вопрос, o: [варианты], a: индекс верного, e: пояснение }
+   ===================================================================== */
+const SUBJECTS = {
+  math: {
+    name: "Математика", emoji: "📐",
+    questions: [
+      { t: "Дроби", q: "Сколько будет 3/4 + 1/8?", o: ["7/8", "4/12", "1/2", "5/8"], a: 0, e: "Приводим к знаменателю 8: 6/8 + 1/8 = 7/8." },
+      { t: "Дроби", q: "Чему равны 2/3 от 18?", o: ["12", "6", "9", "27"], a: 0, e: "18 : 3 × 2 = 12." },
+      { t: "Проценты", q: "Сколько составляет 15% от 200?", o: ["30", "15", "20", "45"], a: 0, e: "200 × 15 / 100 = 30." },
+      { t: "Проценты", q: "Цена 800 ₸ выросла на 25%. Какой стала цена?", o: ["1000 ₸", "825 ₸", "1025 ₸", "200 ₸"], a: 0, e: "25% от 800 = 200, значит 800 + 200 = 1000 ₸." },
+      { t: "Уравнения", q: "Реши уравнение: 3x − 7 = 11", o: ["x = 6", "x = 4", "x = 18", "x = 3"], a: 0, e: "3x = 11 + 7 = 18, x = 18 : 3 = 6." },
+      { t: "Уравнения", q: "Реши уравнение: 2(x + 3) = 14", o: ["x = 4", "x = 7", "x = 5,5", "x = 8"], a: 0, e: "x + 3 = 7, значит x = 4." },
+      { t: "Геометрия", q: "Площадь прямоугольника со сторонами 6 см и 4 см?", o: ["24 см²", "20 см²", "10 см²", "48 см²"], a: 0, e: "S = a × b = 6 × 4 = 24 см²." },
+      { t: "Геометрия", q: "Чему равна сумма углов любого треугольника?", o: ["180°", "90°", "360°", "270°"], a: 0, e: "Сумма внутренних углов треугольника всегда 180°." },
+      { t: "Степени", q: "Сколько будет 2⁵?", o: ["32", "10", "25", "16"], a: 0, e: "2 × 2 × 2 × 2 × 2 = 32." },
+      { t: "Степени", q: "Упрости: 10³ × 10²", o: ["10⁵", "10⁶", "100⁵", "20⁵"], a: 0, e: "При умножении степеней с одинаковым основанием показатели складываются: 3 + 2 = 5." }
+    ]
+  },
+  physics: {
+    name: "Физика", emoji: "⚡",
+    questions: [
+      { t: "Силы", q: "В каких единицах измеряется сила?", o: ["Ньютон (Н)", "Джоуль (Дж)", "Ватт (Вт)", "Паскаль (Па)"], a: 0, e: "Сила измеряется в ньютонах, в честь Исаака Ньютона." },
+      { t: "Силы", q: "Тело массой 2 кг движется с ускорением 3 м/с². Какая сила на него действует?", o: ["6 Н", "1,5 Н", "5 Н", "0,67 Н"], a: 0, e: "Второй закон Ньютона: F = m × a = 2 × 3 = 6 Н." },
+      { t: "Давление", q: "Сила 100 Н давит на площадь 2 м². Каково давление?", o: ["50 Па", "200 Па", "102 Па", "0,02 Па"], a: 0, e: "p = F / S = 100 / 2 = 50 Па." },
+      { t: "Давление", q: "Почему острый нож режет лучше тупого?", o: ["Меньше площадь — больше давление", "Острый нож тяжелее", "У острого ножа больше трение", "Острый нож сделан из другого металла"], a: 0, e: "При той же силе меньшая площадь лезвия создаёт большее давление (p = F/S)." },
+      { t: "Электричество", q: "Напряжение 12 В, сопротивление 4 Ом. Чему равна сила тока?", o: ["3 А", "48 А", "16 А", "8 А"], a: 0, e: "Закон Ома: I = U / R = 12 / 4 = 3 А." },
+      { t: "Электричество", q: "В каких единицах измеряется электрическое сопротивление?", o: ["Ом", "Ампер", "Вольт", "Ватт"], a: 0, e: "Сопротивление измеряют в омах (Ом), силу тока — в амперах, напряжение — в вольтах." },
+      { t: "Оптика", q: "Примерная скорость света в вакууме?", o: ["300 000 км/с", "340 м/с", "300 км/ч", "1 000 км/с"], a: 0, e: "Свет в вакууме проходит около 300 000 км в секунду. 340 м/с — это скорость звука в воздухе." },
+      { t: "Оптика", q: "Как связаны угол падения и угол отражения луча от зеркала?", o: ["Они равны", "Угол отражения вдвое больше", "Их сумма всегда 90°", "Они не связаны"], a: 0, e: "Закон отражения: угол падения равен углу отражения." },
+      { t: "Тепловые явления", q: "При какой температуре кипит чистая вода при нормальном атмосферном давлении?", o: ["100 °C", "90 °C", "0 °C", "120 °C"], a: 0, e: "При нормальном давлении вода кипит при 100 °C. В горах, где давление ниже, — при меньшей температуре." },
+      { t: "Тепловые явления", q: "Каким способом тепло от Солнца доходит до Земли через космос?", o: ["Излучением", "Теплопроводностью", "Конвекцией", "Никаким"], a: 0, e: "В вакууме нет вещества, поэтому тепло передаётся только излучением." }
+    ]
+  },
+  history: {
+    name: "История", emoji: "🏛️",
+    questions: [
+      { t: "Древний мир", q: "В какой древней цивилизации строили знаменитые пирамиды в Гизе?", o: ["Древний Египет", "Древний Рим", "Древняя Греция", "Древний Китай"], a: 0, e: "Пирамиды в Гизе построены в Древнем Египте как гробницы фараонов." },
+      { t: "Древний мир", q: "Где зародились первые Олимпийские игры?", o: ["В Древней Греции", "В Древнем Риме", "В Египте", "В Персии"], a: 0, e: "Олимпийские игры проводились в Олимпии, в Древней Греции." },
+      { t: "Средние века", q: "Какие регионы соединял Великий шёлковый путь?", o: ["Китай и Средиземноморье (Европу)", "Европу и Америку", "Африку и Австралию", "Индию и Америку"], a: 0, e: "Караванные дороги шли из Китая через Центральную Азию, в том числе юг Казахстана, к Ближнему Востоку и Средиземноморью." },
+      { t: "История Казахстана", q: "Кто считается основателями Казахского ханства?", o: ["Керей и Жанибек", "Абылай и Кенесары", "Абай и Шокан", "Тауке и Есим"], a: 0, e: "Казахское ханство основали султаны Керей и Жанибек в середине XV века." },
+      { t: "История Казахстана", q: "Когда Казахстан провозгласил государственную независимость?", o: ["16 декабря 1991 года", "25 октября 1990 года", "1 января 1993 года", "30 августа 1995 года"], a: 0, e: "16 декабря 1991 года — День Независимости Казахстана." },
+      { t: "История Казахстана", q: "В каком году введена национальная валюта Казахстана — тенге?", o: ["1993", "1991", "1996", "2000"], a: 0, e: "Тенге введён в ноябре 1993 года." },
+      { t: "Новое время", q: "В каком году экспедиция Христофора Колумба достигла Америки?", o: ["1492", "1066", "1789", "1610"], a: 0, e: "В 1492 году корабли Колумба достигли островов Карибского моря." },
+      { t: "Новое время", q: "В какой стране началась промышленная революция?", o: ["Великобритания", "Россия", "Япония", "Испания"], a: 0, e: "Промышленная революция началась в Великобритании во второй половине XVIII века." },
+      { t: "XX век", q: "В какие годы шла Вторая мировая война?", o: ["1939–1945", "1914–1918", "1941–1949", "1936–1942"], a: 0, e: "Вторая мировая война началась в 1939 и закончилась в 1945 году." },
+      { t: "XX век", q: "Откуда в 1961 году стартовал Юрий Гагарин — первый человек в космосе?", o: ["С космодрома Байконур", "С мыса Канаверал", "С космодрома Плесецк", "С Луны"], a: 0, e: "Гагарин полетел 12 апреля 1961 года с космодрома Байконур, который находится в Казахстане." }
+    ]
+  },
+  english: {
+    name: "Английский", emoji: "🇬🇧",
+    questions: [
+      { t: "Времена глаголов", q: "She ___ to school every day.", o: ["goes", "go", "going", "is go"], a: 0, e: "Present Simple: с he/she/it к глаголу добавляется -s/-es: she goes." },
+      { t: "Времена глаголов", q: "Yesterday I ___ a great film.", o: ["watched", "watch", "am watching", "have watch"], a: 0, e: "Yesterday указывает на прошлое — Past Simple: watched." },
+      { t: "Времена глаголов", q: "Look! They ___ football right now.", o: ["are playing", "play", "played", "plays"], a: 0, e: "Right now — действие происходит сейчас, нужен Present Continuous: are playing." },
+      { t: "Неправильные глаголы", q: "Какая форма Past Simple у глагола «go»?", o: ["went", "goed", "gone", "going"], a: 0, e: "go — went — gone. «Went» — прошедшее время." },
+      { t: "Неправильные глаголы", q: "Какая третья форма (Past Participle) у глагола «write»?", o: ["written", "wrote", "writed", "writing"], a: 0, e: "write — wrote — written." },
+      { t: "Артикли и предлоги", q: "I eat ___ apple every morning.", o: ["an", "a", "the", "—"], a: 0, e: "Перед словом, которое начинается с гласного звука, ставим «an»: an apple." },
+      { t: "Артикли и предлоги", q: "My birthday is ___ Monday.", o: ["on", "in", "at", "to"], a: 0, e: "С днями недели используется предлог «on»: on Monday." },
+      { t: "Лексика", q: "Как переводится слово «library»?", o: ["Библиотека", "Лаборатория", "Книжный магазин", "Свобода"], a: 0, e: "Library — библиотека. Книжный магазин — bookshop." },
+      { t: "Лексика", q: "Подбери антоним к слову «expensive».", o: ["cheap", "rich", "big", "costly"], a: 0, e: "Expensive — дорогой, cheap — дешёвый. Costly — синоним." },
+      { t: "Условные предложения", q: "If it rains tomorrow, we ___ at home.", o: ["will stay", "stay", "stayed", "would stayed"], a: 0, e: "Первый тип условных: If + Present Simple, will + глагол." }
+    ]
+  }
+};
+
+/** Что повторить, если тема проседает. */
+const TOPIC_TIPS = {
+  "Дроби": "Повтори приведение к общему знаменателю и нахождение части от числа.",
+  "Проценты": "Запомни: p% от числа = число × p / 100. Потренируйся на скидках и ценах.",
+  "Уравнения": "Переноси числа через знак «=» с противоположным знаком и проверяй ответ подстановкой.",
+  "Геометрия": "Выучи формулы площадей и свойства углов треугольника.",
+  "Степени": "Повтори свойства степеней: aᵐ × aⁿ = aᵐ⁺ⁿ.",
+  "Силы": "Повтори законы Ньютона и единицы измерения (Н, кг, м/с²).",
+  "Давление": "Разбери формулу p = F/S на примерах: нож, кнопка, лыжи.",
+  "Электричество": "Повтори закон Ома I = U/R и единицы: А, В, Ом.",
+  "Оптика": "Повтори законы отражения и преломления света.",
+  "Тепловые явления": "Разбери три способа теплопередачи: теплопроводность, конвекция, излучение.",
+  "Древний мир": "Составь ленту времени древних цивилизаций: Египет, Греция, Рим.",
+  "Средние века": "Повтори торговые пути и города Средней Азии.",
+  "История Казахстана": "Повтори ключевые события: Казахское ханство, независимость, введение тенге.",
+  "Новое время": "Повтори Великие географические открытия и промышленную революцию.",
+  "XX век": "Составь хронологию главных событий XX века.",
+  "Времена глаголов": "Повтори маркеры времён: every day, yesterday, now.",
+  "Неправильные глаголы": "Учи по 10 неправильных глаголов в день (три формы).",
+  "Артикли и предлоги": "Повтори a/an/the и предлоги времени: in, on, at.",
+  "Лексика": "Заведи карточки со словами и повторяй их каждый день.",
+  "Условные предложения": "Повтори схему: If + Present Simple, will + глагол."
+};
+
+/* =====================================================================
+   3. ДАННЫЕ: ТЕМЫ HOMETRY
+   ===================================================================== */
+const HT_TOPICS = [
+  {
+    id: "electricity", emoji: "💡", title: "Электричество", subject: "Физика",
+    short: "Почему воздушный шарик «прилипает» к стене и как ток бежит по проводам.",
+    explain: "Электрический ток — это направленное движение заряженных частиц, чаще всего электронов. Представь трубу с водой: напряжение — как напор насоса, сила тока — сколько воды протекает за секунду, а сопротивление — насколько узкая труба. Батарейка — это «насос», который толкает заряды по цепи.",
+    items: [["🔋", "Батарейка в пульте — источник напряжения, «насос» для зарядов."], ["🔌", "Зарядка телефона: по проводу течёт ток к аккумулятору."], ["🎈", "Шарик, потёртый о волосы, притягивает бумажки — это статическое электричество."]],
+    need: ["Воздушный шарик", "Сухие волосы или шерстяной свитер", "Мелкие кусочки бумаги"],
+    steps: ["Надуй шарик и завяжи его.", "Потри шарик о сухие волосы или шерстяной свитер 15–20 секунд.", "Поднеси шарик к мелким кусочкам бумаги, не касаясь их.", "Потом поднеси шарик к тонкой струйке воды из крана."],
+    conclusion: "При трении электроны переходят с волос на шарик, и он заряжается. Заряженный шарик притягивает бумажки и даже отклоняет струйку воды. Это статическое электричество — заряды есть, но они не текут по цепи.",
+    safety: "Никогда не проводи опыты с розеткой и бытовыми проводами — это опасно для жизни."
+  },
+  {
+    id: "fractions", emoji: "🍕", title: "Дроби", subject: "Математика",
+    short: "Пицца, шоколадка и полоски бумаги объясняют, что такое части целого.",
+    explain: "Дробь показывает часть целого. Нижнее число (знаменатель) — на сколько равных частей разрезали целое. Верхнее (числитель) — сколько частей взяли. 3/8 пиццы — это пицца на 8 кусков, из которых ты взял 3. Чем больше знаменатель, тем меньше каждый кусок.",
+    items: [["🍕", "Пицца из 8 кусков: один кусок — 1/8, половина — 4/8 = 1/2."], ["🍫", "Плитка шоколада из 12 долек: 3 дольки — это 3/12 = 1/4."], ["⏰", "Четверть часа — 1/4 от 60 минут = 15 минут."]],
+    need: ["3 одинаковые полоски бумаги", "Карандаш", "Ножницы (по желанию)"],
+    steps: ["Первую полоску оставь целой и подпиши «1».", "Вторую согни пополам и подпиши каждую часть «1/2».", "Третью согни пополам дважды — получится 4 части, подпиши их «1/4».", "Положи полоски друг под другом и сравни: сколько четвертей помещается в половину?"],
+    conclusion: "В одну половину помещаются ровно две четверти: 1/2 = 2/4. Это основное свойство дроби: если числитель и знаменатель умножить на одно и то же число, величина дроби не изменится."
+  },
+  {
+    id: "pressure", emoji: "📌", title: "Давление", subject: "Физика",
+    short: "Почему кнопка легко входит в доску, а на лыжах не проваливаешься в снег.",
+    explain: "Давление — это сила, которая приходится на каждый кусочек площади: p = F / S. Если давить с той же силой на меньшую площадь, давление растёт. Поэтому острый нож режет, кнопка втыкается, а широкие лыжи и рюкзаки с широкими лямками давят мягче.",
+    items: [["🔪", "Острый нож: тонкое лезвие — маленькая площадь — большое давление."], ["🎒", "Широкие лямки рюкзака распределяют вес — плечам легче."], ["🎿", "Лыжи увеличивают площадь — ты не проваливаешься в снег."]],
+    need: ["Кусок пластилина", "Карандаш", "Линейка"],
+    steps: ["Раскатай пластилин в толстый блин.", "Надави на него тупым концом карандаша.", "С той же силой надави заточенным концом рядом.", "Сравни глубину двух следов линейкой."],
+    conclusion: "Заточенный конец уходит глубже: площадь меньше, значит при той же силе давление больше. Это и есть формула p = F / S в действии."
+  },
+  {
+    id: "inertia", emoji: "🪙", title: "Инерция", subject: "Физика",
+    short: "Фокус с монетой и открыткой: тела «не хотят» менять скорость.",
+    explain: "Инерция — свойство тел сохранять свою скорость, если на них не действуют другие тела. Стоящий предмет хочет стоять, движущийся — двигаться дальше. Поэтому в автобусе при резком торможении тебя качает вперёд: автобус остановился, а ты по инерции ещё движешься.",
+    items: [["🚌", "Резкое торможение автобуса — пассажиров качает вперёд."], ["🧴", "Чтобы вытряхнуть кетчуп, бутылку резко останавливают — соус летит дальше."], ["🧹", "Встряхивают коврик: коврик останавливается, а пыль летит дальше."]],
+    need: ["Стакан", "Открытка или плотная картонка", "Монета"],
+    steps: ["Положи открытку на стакан, а монету — сверху, точно над серединой стакана.", "Резким щелчком пальца выбей открытку горизонтально в сторону.", "Посмотри, куда упала монета.", "Повтори, но теперь тяни открытку медленно."],
+    conclusion: "При резком щелчке монета падает в стакан: по инерции она остаётся на месте, а открытка вылетает из-под неё. При медленном движении трение успевает увлечь монету вместе с открыткой."
+  },
+  {
+    id: "archimedes", emoji: "🥚", title: "Закон Архимеда", subject: "Физика",
+    short: "Почему корабль из металла плавает, а яйцо всплывает в солёной воде.",
+    explain: "На любое тело в жидкости действует выталкивающая сила, направленная вверх. Она равна весу жидкости, которую вытеснило тело: Fₐ = ρж · g · V. Если эта сила больше веса тела — оно всплывает. Корабль вытесняет много воды, поэтому держится на плаву.",
+    items: [["🧊", "Лёд плавает: он легче воды того же объёма."], ["🏐", "Мяч в ванне трудно утопить — вода выталкивает его."], ["🍾", "Пустая закрытая бутылка плавает, полная — тонет."]],
+    need: ["Стакан воды", "Сырое яйцо", "3–4 столовые ложки соли", "Ложка"],
+    steps: ["Аккуратно опусти яйцо в стакан с обычной водой — оно утонет.", "Достань яйцо.", "Размешай в воде 3–4 ложки соли.", "Снова опусти яйцо и наблюдай."],
+    conclusion: "В солёной воде яйцо всплывает. Солёная вода плотнее пресной, поэтому выталкивающая сила больше и становится сильнее веса яйца."
+  },
+  {
+    id: "air-pressure", emoji: "🥤", title: "Атмосферное давление", subject: "Физика",
+    short: "Воздух давит на нас со всех сторон — и может удержать воду в перевёрнутом стакане.",
+    explain: "Воздух имеет вес, и толща атмосферы давит на всё вокруг — это атмосферное давление. Мы его не замечаем, потому что оно действует со всех сторон одинаково. Благодаря ему работают присоски и трубочки для сока: ты уменьшаешь давление во рту, а воздух снаружи вталкивает сок в трубочку.",
+    items: [["🥤", "Трубочка для сока: внешнее давление «вталкивает» напиток."], ["🪝", "Присоска держится на кафеле, потому что её прижимает воздух."], ["💉", "Шприц набирает жидкость за счёт разности давлений."]],
+    need: ["Стакан", "Вода", "Плотная открытка или картон", "Раковина или таз"],
+    steps: ["Налей стакан воды до самого края.", "Плотно накрой его открыткой, чтобы не было пузырей воздуха.", "Придерживая открытку ладонью, переверни стакан над раковиной.", "Медленно убери руку."],
+    conclusion: "Открытка не падает, и вода остаётся в стакане: атмосферное давление снизу на открытку больше, чем давление воды сверху."
+  },
+  {
+    id: "refraction", emoji: "✏️", title: "Преломление света", subject: "Физика",
+    short: "Почему карандаш в стакане воды кажется сломанным.",
+    explain: "Свет в воде распространяется медленнее, чем в воздухе. Когда луч переходит из одной среды в другую под углом, он меняет направление — это преломление. Наш мозг думает, что свет всегда идёт прямо, поэтому предметы в воде кажутся смещёнными, а дно — ближе, чем на самом деле.",
+    items: [["🥛", "Ложка в стакане чая кажется изломанной."], ["🏊", "Дно бассейна кажется мельче, чем есть."], ["👓", "Линзы очков преломляют свет и помогают видеть чётко."]],
+    need: ["Прозрачный стакан", "Вода", "Карандаш", "Монета и непрозрачная кружка"],
+    steps: ["Опусти карандаш в стакан с водой наискосок и посмотри сбоку.", "Положи монету на дно пустой кружки.", "Отойди так, чтобы край кружки только-только закрыл монету.", "Попроси кого-нибудь медленно налить в кружку воду, не сдвигая монету."],
+    conclusion: "Карандаш кажется «сломанным», а монета «появляется» в кружке с водой. Свет от монеты преломляется на границе воды и воздуха и попадает тебе в глаза."
+  },
+  {
+    id: "friction", emoji: "👟", title: "Трение", subject: "Физика",
+    short: "Почему в носках скользко, а в кроссовках нет.",
+    explain: "Сила трения возникает, когда поверхности трутся друг о друга, и всегда мешает движению. Она зависит от материалов и от того, как сильно тела прижаты друг к другу. Трение бывает полезным (не скользим при ходьбе) и вредным (детали машин изнашиваются).",
+    items: [["👟", "Рифлёная подошва кроссовка увеличивает трение — не скользишь."], ["🧦", "Носки на гладком полу — трения мало, легко поскользнуться."], ["🧼", "Мыльные руки скользят: мыло работает как смазка."]],
+    need: ["Книга", "Резинка (канцелярская)", "4–5 круглых карандашей"],
+    steps: ["Привяжи резинку к книге.", "Тяни книгу по столу за резинку и запомни, насколько она растянулась.", "Положи сверху вторую книгу и повтори.", "Подложи под книгу карандаши, как катки, и потяни ещё раз."],
+    conclusion: "С двумя книгами резинка растягивается сильнее — трение выросло, потому что книги сильнее прижаты к столу. На карандашах-катках тянуть легче всего: трение качения меньше трения скольжения."
+  }
+];
+
+/* =====================================================================
+   4. ДАННЫЕ: ДЕМО-АНКЕТЫ TEAMSYNC
+   ===================================================================== */
+const DEMO_PEOPLE = [
+  { id: "d1", name: "Айгерим", skills: ["Дизайн", "Figma", "Презентации"], interests: "UI/UX, иллюстрации, экология", looking: "Программиста для приложения про раздельный сбор мусора" },
+  { id: "d2", name: "Тимур", skills: ["JavaScript", "HTML/CSS", "Python"], interests: "Веб-разработка, хакатоны, игры", looking: "Дизайнера и человека, который умеет выступать" },
+  { id: "d3", name: "Алия", skills: ["Математика", "Аналитика", "Excel"], interests: "Олимпиады, финансы, статистика", looking: "Команду на олимпиаду по финансовой грамотности" },
+  { id: "d4", name: "Данияр", skills: ["Python", "Робототехника", "Arduino"], interests: "Роботы, умный дом, электроника", looking: "Напарника в команду по робототехнике" },
+  { id: "d5", name: "Мадина", skills: ["Английский", "Тексты", "Презентации"], interests: "Дебаты, журналистика, MUN", looking: "Команду для дебатов на английском" },
+  { id: "d6", name: "Арман", skills: ["Видеомонтаж", "Дизайн", "SMM"], interests: "Блогинг, кино, музыка", looking: "Проект, которому нужен видеоролик и соцсети" },
+  { id: "d7", name: "Камила", skills: ["Биология", "Химия", "Исследования"], interests: "Медицина, научные проекты, эко-исследования", looking: "Команду для научного проекта по экологии" },
+  { id: "d8", name: "Ерлан", skills: ["JavaScript", "Аналитика", "Презентации"], interests: "Стартапы, EdTech, бизнес", looking: "Людей в стартап образовательного приложения" }
+];
+const AVATAR_COLORS = ["#8b7bff", "#5ee7df", "#ffb347", "#ff5c7a", "#3ddc97", "#6fa8ff", "#f78fd1", "#c3f16b"];
+
+/* =====================================================================
+   5. РОУТЕР (навигация без перезагрузки по #адресу)
+   ===================================================================== */
+const routes = {
+  "": renderHome,
+  weakpoint: renderWeakPoint,
+  hometry: renderHomeTry,
+  tasks: renderTasks,
+  team: renderTeam
+};
+
+function router() {
+  const [name, param] = location.hash.replace(/^#\/?/, "").split("/");
+  const render = routes[name] || renderHome;
+  if (name !== "weakpoint" && quiz && quiz.finished) quiz = null; // ушли с результата — сбрасываем тест
+  $$(".top-nav a").forEach(a => a.classList.toggle("active", a.dataset.nav === name));
+  const app = $("#app");
+  app.innerHTML = `<div class="view"></div>`;
+  render(app.firstElementChild, param ? decodeURIComponent(param) : undefined);
+  window.scrollTo({ top: 0 });
+}
+window.addEventListener("hashchange", router);
+
+/* =====================================================================
+   6. ГЛАВНАЯ
+   ===================================================================== */
+function renderHome(view) {
+  const history = store.get("tests", []);
+  const avg = history.length ? Math.round(history.reduce((s, h) => s + h.percent, 0) / history.length) : null;
+  const active = store.get("tasks", []).filter(t => !t.done).length;
+  const team = store.get("team", []).length;
+
+  view.innerHTML = `
+    <section class="hero">
+      <p class="eyebrow">✦ SMART STUDENT PLATFORM</p>
+      <h1>Учись проще.<br><em>Развивайся быстрее.</em></h1>
+      <p>Тесты с разбором ошибок, объяснения на бытовых предметах, планировщик дедлайнов и поиск команды — в одном месте.</p>
+    </section>
+
+    <section class="stats" aria-label="Статистика">
+      <div class="stat"><b>${avg === null ? "—" : avg + "%"}</b><span>средний результат тестов</span></div>
+      <div class="stat"><b>${active}</b><span>активных задач</span></div>
+      <div class="stat"><b>${team}</b><span>в моей команде</span></div>
+    </section>
+
+    <section class="modules" aria-label="Модули">
+      <a class="module" href="#/weakpoint" style="--glow:#8b7bff">
+        <span class="m-emoji">🧠</span><h3>WeakPoint</h3><p>Тесты и анализ ошибок</p>
+      </a>
+      <a class="module" href="#/hometry" style="--glow:#5ee7df">
+        <span class="m-emoji">🔍</span><h3>HomeTry</h3><p>Объяснение через предметы</p>
+      </a>
+      <a class="module" href="#/tasks" style="--glow:#ffb347">
+        <span class="m-emoji">📅</span><h3>TaskPlanner</h3><p>Задания и дедлайны</p>
+      </a>
+      <a class="module" href="#/team" style="--glow:#ff5c7a">
+        <span class="m-emoji">🤝</span><h3>TeamSync</h3><p>Поиск команды</p>
+      </a>
+    </section>`;
+}
+
+/* =====================================================================
+   7. МОДУЛЬ WEAKPOINT
+   ===================================================================== */
+let quiz = null; // текущий тест: { subject, questions, answers[], i }
+
+/** Сводка по темам предмета за всю историю прохождений. */
+function topicStats(subjectId) {
+  const stats = {};
+  store.get("tests", []).filter(h => h.subject === subjectId).forEach(h => {
+    Object.entries(h.topics).forEach(([topic, v]) => {
+      stats[topic] = stats[topic] || { right: 0, total: 0 };
+      stats[topic].right += v.right;
+      stats[topic].total += v.total;
+    });
+  });
+  return stats;
+}
+
+function weakTopicsHtml(stats) {
+  const weak = Object.entries(stats)
+    .map(([topic, v]) => ({ topic, p: Math.round(v.right / v.total * 100) }))
+    .filter(x => x.p < 70)
+    .sort((a, b) => a.p - b.p);
+  if (!weak.length) return `<p class="muted">Слабых тем не найдено — все темы выше 70%. Так держать! 🎉</p>`;
+  return weak.map(w => `
+    <div class="weak"><b>${esc(w.topic)} — ${w.p}%</b><br><span class="small">📌 ${esc(TOPIC_TIPS[w.topic] || "Повтори теорию и реши ещё несколько задач по этой теме.")}</span></div>`).join("");
+}
+
+function renderWeakPoint(view) {
+  if (quiz && quiz.finished) return renderQuizResult(view);
+  if (quiz) return renderQuestion(view);
+
+  const history = store.get("tests", []);
+  view.innerHTML = `
+    ${modHead("🧠", "WeakPoint", "Пройди тест — найдём слабые темы и подскажем, что повторить")}
+    <h3>Выбери предмет</h3>
+    <div class="subj-grid">
+      ${Object.entries(SUBJECTS).map(([id, s]) => {
+        const last = history.find(h => h.subject === id);
+        return `<button class="subj" data-subject="${id}">
+          <span class="s-emoji">${s.emoji}</span>
+          <b>${s.name}</b>
+          <small>${s.questions.length} вопросов${last ? ` · последний: <span class="pct ${pctClass(last.percent)}">${last.percent}%</span>` : ""}</small>
+        </button>`;
+      }).join("")}
+    </div>
+
+    <div class="two-col">
+      <section class="card">
+        <h3>📉 Слабые темы</h3>
+        ${history.length
+          ? Object.keys(SUBJECTS).filter(id => history.some(h => h.subject === id)).map(id =>
+              `<p class="small muted" style="margin:10px 0 6px">${SUBJECTS[id].emoji} ${SUBJECTS[id].name}</p>${weakTopicsHtml(topicStats(id))}`).join("")
+          : emptyState("🎯", "Пока нечего анализировать", "Пройди первый тест — здесь появятся темы, которые стоит подтянуть.")}
+      </section>
+      <section class="card">
+        <div class="row between"><h3 style="margin:0">🕑 История прохождений</h3>
+          ${history.length ? `<button class="btn btn-sm btn-ghost btn-danger" id="clearHistory">Очистить</button>` : ""}</div>
+        ${history.length
+          ? history.slice(0, 15).map(h => `
+              <div class="hist-item">
+                <div><b>${SUBJECTS[h.subject].emoji} ${SUBJECTS[h.subject].name}</b><br><span class="small muted">${fmtDate(h.date)} · ${h.score} из ${h.total}</span></div>
+                <span class="pct ${pctClass(h.percent)}">${h.percent}%</span>
+              </div>`).join("")
+          : emptyState("📝", "История пуста", "Результаты каждого теста будут сохраняться здесь.")}
+      </section>
+    </div>`;
+
+  $$("[data-subject]", view).forEach(b => b.onclick = () => startQuiz(b.dataset.subject));
+  const clear = $("#clearHistory", view);
+  if (clear) clear.onclick = () => {
+    if (confirm("Удалить всю историю тестов?")) { store.set("tests", []); router(); }
+  };
+}
+
+function startQuiz(subjectId) {
+  // Перемешиваем вопросы и варианты, запоминая, где правильный ответ
+  const questions = shuffle(SUBJECTS[subjectId].questions).map(q => {
+    const order = shuffle(q.o.map((_, i) => i));
+    return { ...q, o: order.map(i => q.o[i]), a: order.indexOf(q.a) };
+  });
+  quiz = { subject: subjectId, questions, answers: Array(questions.length).fill(null), i: 0 };
+  router();
+}
+
+function renderQuestion(view) {
+  const q = quiz.questions[quiz.i];
+  const total = quiz.questions.length;
+  const s = SUBJECTS[quiz.subject];
+  view.innerHTML = `
+    <div class="mod-head">
+      <a class="back" href="#/weakpoint" id="quitQuiz" aria-label="Выйти из теста">←</a>
+      <div><h1>${s.emoji} ${s.name}</h1><p>Тема: ${esc(q.t)}</p></div>
+    </div>
+    <section class="card question">
+      <div class="q-top"><span>Вопрос ${quiz.i + 1} из ${total}</span><span>${quiz.answers.filter(a => a !== null).length} отвечено</span></div>
+      <div class="progress"><i style="width:${(quiz.i / total) * 100}%"></i></div>
+      <h2>${esc(q.q)}</h2>
+      <div class="options">
+        ${q.o.map((opt, k) => `<button class="option ${quiz.answers[quiz.i] === k ? "picked" : ""}" data-k="${k}">${esc(opt)}</button>`).join("")}
+      </div>
+      <div class="row between" style="margin-top:16px">
+        <button class="btn btn-ghost" id="prevQ" ${quiz.i === 0 ? "disabled" : ""}>← Назад</button>
+        <button class="btn btn-primary" id="nextQ" ${quiz.answers[quiz.i] === null ? "disabled" : ""}>${quiz.i === total - 1 ? "Завершить тест" : "Далее →"}</button>
+      </div>
+    </section>`;
+
+  $("#quitQuiz", view).onclick = e => {
+    e.preventDefault();
+    if (confirm("Выйти из теста? Прогресс не сохранится.")) { quiz = null; router(); }
+  };
+  $$(".option", view).forEach(b => b.onclick = () => { quiz.answers[quiz.i] = +b.dataset.k; renderQuestion(view); });
+  $("#prevQ", view).onclick = () => { quiz.i--; renderQuestion(view); };
+  $("#nextQ", view).onclick = () => {
+    if (quiz.i < total - 1) { quiz.i++; renderQuestion(view); }
+    else finishQuiz();
+  };
+}
+
+function finishQuiz() {
+  const topics = {};
+  let score = 0;
+  quiz.questions.forEach((q, i) => {
+    const right = quiz.answers[i] === q.a;
+    if (right) score++;
+    topics[q.t] = topics[q.t] || { right: 0, total: 0 };
+    topics[q.t].total++;
+    if (right) topics[q.t].right++;
+  });
+  const total = quiz.questions.length;
+  const record = { id: uid(), subject: quiz.subject, date: new Date().toISOString(), score, total, percent: Math.round(score / total * 100), topics };
+  store.set("tests", [record, ...store.get("tests", [])].slice(0, 100));
+  quiz.finished = true;
+  quiz.record = record;
+  router();
+}
+
+function renderQuizResult(view) {
+  const { record, questions, answers, subject } = quiz;
+  const s = SUBJECTS[subject];
+  const mistakes = questions.map((q, i) => ({ q, picked: answers[i] })).filter(x => x.picked !== x.q.a);
+  const color = record.percent >= 80 ? "var(--ok)" : record.percent >= 50 ? "var(--warn)" : "var(--danger)";
+  const msg = record.percent >= 80 ? "Отличный результат! 🔥" : record.percent >= 50 ? "Неплохо, но есть что подтянуть 💪" : "Не страшно — разберём ошибки и попробуем снова 🌱";
+
+  view.innerHTML = `
+    ${modHead(s.emoji, "Результат: " + s.name, fmtDate(record.date), "#/weakpoint")}
+    <section class="card result-top">
+      <div class="ring" style="--p:${record.percent}; --ring-c:${color}"><div>${record.percent}%</div></div>
+      <div>
+        <h2 style="margin-bottom:4px">${record.score} из ${record.total} правильно</h2>
+        <p class="muted">${msg}</p>
+        <div class="row">
+          <button class="btn btn-primary" id="retry">↻ Пройти ещё раз</button>
+          <button class="btn" id="toSubjects">Другой предмет</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="two-col">
+      <section class="card">
+        <h3>❌ Ошибки (${mistakes.length})</h3>
+        ${mistakes.length ? mistakes.map(m => `
+          <div class="mistake">
+            <p><b>${esc(m.q.q)}</b></p>
+            <p class="bad">Твой ответ: ${esc(m.q.o[m.picked])}</p>
+            <p class="good">Правильно: ${esc(m.q.o[m.q.a])}</p>
+            <p class="muted">💡 ${esc(m.q.e)}</p>
+          </div>`).join("")
+        : emptyState("🏆", "Ни одной ошибки!", "Попробуй другой предмет.")}
+      </section>
+      <section class="card">
+        <h3>📊 По темам в этом тесте</h3>
+        ${Object.entries(record.topics).map(([t, v]) => {
+          const p = Math.round(v.right / v.total * 100);
+          return `<div class="topic-row"><div class="row"><span>${esc(t)}</span><span class="pct ${pctClass(p)}">${v.right}/${v.total}</span></div><div class="progress"><i style="width:${p}%"></i></div></div>`;
+        }).join("")}
+        <h3 style="margin-top:18px">🎯 Что повторить</h3>
+        ${weakTopicsHtml(record.topics)}
+      </section>
+    </div>`;
+
+  $(".back", view).onclick = e => { e.preventDefault(); quiz = null; router(); };
+  $("#retry", view).onclick = () => startQuiz(subject);
+  $("#toSubjects", view).onclick = () => { quiz = null; router(); };
+}
+
+/* =====================================================================
+   8. МОДУЛЬ HOMETRY
+   ===================================================================== */
+function renderHomeTry(view, topicId) {
+  if (topicId) return renderHomeTryTopic(view, topicId);
+  view.innerHTML = `
+    ${modHead("🔍", "HomeTry", "Сложные темы — через вещи, которые есть у тебя дома")}
+    <label class="field">
+      <span>Поиск по темам</span>
+      <input type="search" id="htSearch" placeholder="Например: давление, дроби, свет…" autocomplete="off">
+    </label>
+    <div class="ht-grid" id="htList"></div>`;
+
+  const list = $("#htList", view);
+  const draw = query => {
+    const q = query.trim().toLowerCase();
+    const found = HT_TOPICS.filter(t => !q || [t.title, t.subject, t.short, t.explain, ...t.need, ...t.items.map(i => i[1])].join(" ").toLowerCase().includes(q));
+    list.innerHTML = found.length
+      ? found.map(t => `
+          <button class="ht-card" data-topic="${t.id}">
+            <span class="ht-emoji">${t.emoji}</span>
+            <span><b>${esc(t.title)}</b><p>${esc(t.short)}</p><span class="chip">${esc(t.subject)}</span></span>
+          </button>`).join("")
+      : emptyState("🔎", "Ничего не нашлось", "Попробуй другое слово: «ток», «свет», «части», «вода».");
+    $$("[data-topic]", list).forEach(b => b.onclick = () => { location.hash = "#/hometry/" + b.dataset.topic; });
+  };
+  $("#htSearch", view).oninput = e => draw(e.target.value);
+  draw("");
+}
+
+function renderHomeTryTopic(view, id) {
+  const t = HT_TOPICS.find(x => x.id === id);
+  if (!t) { location.hash = "#/hometry"; return; }
+  view.innerHTML = `
+    ${modHead(t.emoji, esc(t.title), esc(t.subject) + " · объяснение через предметы", "#/hometry")}
+    <section class="card">
+      <h3>🧩 Простыми словами</h3>
+      <p class="explain">${esc(t.explain)}</p>
+      <div class="items">${t.items.map(([e, txt]) => `<div class="item"><span>${e}</span><span>${esc(txt)}</span></div>`).join("")}</div>
+    </section>
+    <div class="two-col">
+      <section class="card">
+        <h3>🧪 Опыт дома</h3>
+        <p class="small muted" style="margin-bottom:6px">Что понадобится:</p>
+        <ul class="need">${t.need.map(n => `<li class="chip on">${esc(n)}</li>`).join("")}</ul>
+        <p class="small muted" style="margin:16px 0 10px">Шаги:</p>
+        <ol class="steps">${t.steps.map(s => `<li>${esc(s)}</li>`).join("")}</ol>
+        ${t.safety ? `<p class="safety">⚠️ ${esc(t.safety)}</p>` : ""}
+      </section>
+      <section class="card">
+        <h3>✅ Вывод</h3>
+        <div class="conclusion">${esc(t.conclusion)}</div>
+        <p class="small muted" style="margin-top:14px">Хочешь проверить знания? Пройди тест в WeakPoint.</p>
+        <a class="btn btn-block" href="#/weakpoint">🧠 Перейти к тестам</a>
+      </section>
+    </div>`;
+}
+
+/* =====================================================================
+   9. МОДУЛЬ TASKPLANNER
+   ===================================================================== */
+const PRIORITY = { high: "Высокий", medium: "Средний", low: "Низкий" };
+const PRIORITY_RANK = { high: 0, medium: 1, low: 2 };
+let taskFilter = "all";
+let editingTaskId = null;
+
+/** Статус по дедлайну: overdue — просрочено, urgent — меньше суток. */
+function deadlineStatus(task) {
+  if (task.done || !task.deadline) return "";
+  const diff = new Date(task.deadline) - Date.now();
+  if (diff < 0) return "overdue";
+  if (diff < 24 * 60 * 60 * 1000) return "urgent";
+  return "";
+}
+
+function deadlineLabel(task) {
+  if (!task.deadline) return "без дедлайна";
+  const st = deadlineStatus(task);
+  const when = fmtDate(task.deadline);
+  if (st === "overdue") return "⛔ просрочено · " + when;
+  if (st === "urgent") {
+    const h = Math.max(1, Math.round((new Date(task.deadline) - Date.now()) / 3600000));
+    return `🔥 через ${h} ч · ${when}`;
+  }
+  return "⏰ " + when;
+}
+
+function renderTasks(view) {
+  const tasks = store.get("tasks", []);
+  const editing = tasks.find(t => t.id === editingTaskId);
+  const doneCount = tasks.filter(t => t.done).length;
+  const percent = tasks.length ? Math.round(doneCount / tasks.length * 100) : 0;
+
+  view.innerHTML = `
+    ${modHead("📅", "TaskPlanner", "Задания, дедлайны и приоритеты")}
+    <div class="two-col">
+      <section class="card">
+        <h3>${editing ? "✏️ Редактировать задачу" : "➕ Новая задача"}</h3>
+        <form id="taskForm" autocomplete="off">
+          <label class="field"><span>Название *</span><input type="text" name="title" required maxlength="120" placeholder="Например: Реферат по истории" value="${esc(editing?.title)}"></label>
+          <div class="form-grid">
+            <label class="field"><span>Предмет</span><input type="text" name="subject" maxlength="40" placeholder="История" value="${esc(editing?.subject)}" list="subjList"></label>
+            <label class="field"><span>Приоритет</span>
+              <select name="priority">${Object.entries(PRIORITY).map(([k, v]) => `<option value="${k}" ${(editing?.priority || "medium") === k ? "selected" : ""}>${v}</option>`).join("")}</select>
+            </label>
+          </div>
+          <label class="field"><span>Дедлайн</span><input type="datetime-local" name="deadline" value="${esc(editing?.deadline)}"></label>
+          <datalist id="subjList">${["Математика", "Физика", "История", "Английский", "Химия", "Биология", "Литература", "Информатика"].map(s => `<option value="${s}">`).join("")}</datalist>
+          <div class="row">
+            <button class="btn btn-primary" type="submit">${editing ? "Сохранить" : "Добавить задачу"}</button>
+            ${editing ? `<button class="btn btn-ghost" type="button" id="cancelEdit">Отмена</button>` : ""}
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="row between"><h3 style="margin:0">📈 Прогресс</h3><b>${doneCount} из ${tasks.length}</b></div>
+        <div class="progress" style="margin:12px 0 8px"><i style="width:${percent}%"></i></div>
+        <p class="small muted">${tasks.length ? `Выполнено ${percent}% · активных: ${tasks.length - doneCount}` : "Добавь задачи, чтобы видеть прогресс."}</p>
+        <div class="row small" style="gap:6px">
+          <span class="chip deadline overdue">⛔ просрочено</span>
+          <span class="chip deadline urgent">🔥 меньше суток</span>
+        </div>
+      </section>
+    </div>
+
+    <div class="row between" style="margin:4px 0 14px">
+      <div class="seg" role="tablist" aria-label="Фильтр задач">
+        ${[["all", "Все"], ["active", "Активные"], ["done", "Выполненные"]].map(([k, v]) => `<button data-filter="${k}" class="${taskFilter === k ? "active" : ""}">${v}</button>`).join("")}
+      </div>
+      <span class="small muted">Сортировка: по дедлайну</span>
+    </div>
+    <div id="taskList"></div>`;
+
+  // Список: фильтр + сортировка по дедлайну (без дедлайна — в конце), затем по приоритету
+  const list = tasks
+    .filter(t => taskFilter === "all" || (taskFilter === "active" ? !t.done : t.done))
+    .sort((a, b) => {
+      if (a.done !== b.done) return a.done ? 1 : -1;
+      const da = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+      const db = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+      return da - db || PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
+    });
+
+  const box = $("#taskList", view);
+  if (!tasks.length) {
+    box.innerHTML = emptyState("🗒️", "Задач пока нет", "Заполни форму выше: название, предмет, дедлайн и приоритет.");
+  } else if (!list.length) {
+    box.innerHTML = emptyState(taskFilter === "done" ? "⏳" : "🎉", taskFilter === "done" ? "Выполненных задач пока нет" : "Все задачи выполнены!", taskFilter === "done" ? "Отметь задачу галочкой, когда закончишь её." : "Отличная работа. Добавь новую задачу, когда понадобится.");
+  } else {
+    box.innerHTML = list.map(t => {
+      const st = deadlineStatus(t);
+      return `
+        <article class="task ${t.done ? "done" : ""} ${st}">
+          <button class="check" data-toggle="${t.id}" aria-label="${t.done ? "Вернуть в активные" : "Отметить выполненной"}">${t.done ? "✓" : ""}</button>
+          <div class="t-body">
+            <div class="t-title">${esc(t.title)}</div>
+            <div class="t-meta">
+              ${t.subject ? `<span class="chip">📚 ${esc(t.subject)}</span>` : ""}
+              <span class="chip prio-${t.priority}">● ${PRIORITY[t.priority]}</span>
+              <span class="chip deadline ${st}">${deadlineLabel(t)}</span>
+            </div>
+          </div>
+          <div class="t-actions">
+            <button class="icon-btn" data-edit="${t.id}" aria-label="Редактировать">✏️</button>
+            <button class="icon-btn" data-del="${t.id}" aria-label="Удалить">🗑️</button>
+          </div>
+        </article>`;
+    }).join("");
+  }
+
+  // --- обработчики ---
+  $("#taskForm", view).onsubmit = e => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const data = {
+      title: f.get("title").trim(),
+      subject: f.get("subject").trim(),
+      priority: f.get("priority"),
+      deadline: f.get("deadline")
+    };
+    if (!data.title) return toast("Введи название задачи");
+    let all = store.get("tasks", []);
+    if (editingTaskId) {
+      all = all.map(t => t.id === editingTaskId ? { ...t, ...data } : t);
+      toast("Задача обновлена ✓");
+    } else {
+      all.push({ id: uid(), done: false, created: new Date().toISOString(), ...data });
+      toast("Задача добавлена ✓");
+    }
+    editingTaskId = null;
+    store.set("tasks", all);
+    renderTasks(view);
+  };
+  const cancel = $("#cancelEdit", view);
+  if (cancel) cancel.onclick = () => { editingTaskId = null; renderTasks(view); };
+
+  $$("[data-filter]", view).forEach(b => b.onclick = () => { taskFilter = b.dataset.filter; renderTasks(view); });
+  $$("[data-toggle]", view).forEach(b => b.onclick = () => {
+    store.set("tasks", store.get("tasks", []).map(t => t.id === b.dataset.toggle ? { ...t, done: !t.done } : t));
+    renderTasks(view);
+  });
+  $$("[data-edit]", view).forEach(b => b.onclick = () => { editingTaskId = b.dataset.edit; renderTasks(view); window.scrollTo({ top: 0, behavior: "smooth" }); });
+  $$("[data-del]", view).forEach(b => b.onclick = () => {
+    if (!confirm("Удалить задачу?")) return;
+    if (editingTaskId === b.dataset.del) editingTaskId = null;
+    store.set("tasks", store.get("tasks", []).filter(t => t.id !== b.dataset.del));
+    toast("Задача удалена");
+    renderTasks(view);
+  });
+}
+
+/* =====================================================================
+   10. МОДУЛЬ TEAMSYNC
+   ===================================================================== */
+let teamTab = "feed";
+let teamQuery = "";
+let teamSkill = "";
+
+/** Все анкеты: моя (если есть) + демо. */
+function allPeople() {
+  const mine = store.get("myProfile", null);
+  return mine ? [{ ...mine, mine: true }, ...DEMO_PEOPLE] : DEMO_PEOPLE;
+}
+
+function avatar(person, i) {
+  const color = AVATAR_COLORS[i % AVATAR_COLORS.length];
+  return `<span class="avatar" style="background:${color}">${esc(person.name.trim().charAt(0).toUpperCase() || "?")}</span>`;
+}
+
+function personCard(p, i, team) {
+  const inTeam = team.includes(p.id);
+  return `
+    <article class="person ${p.mine ? "mine" : ""}">
+      <div class="p-head">${avatar(p, i)}<div><b>${esc(p.name)}</b><small>${p.mine ? "Это ты" : esc(p.skills.slice(0, 2).join(" · "))}</small></div></div>
+      <div class="chips">${p.skills.map(s => `<span class="chip">${esc(s)}</span>`).join("")}</div>
+      <p><span class="label">Интересы:</span> ${esc(p.interests)}</p>
+      <p><span class="label">Ищу:</span> ${esc(p.looking)}</p>
+      ${p.mine
+        ? `<button class="btn btn-sm" data-tab="profile">✏️ Редактировать анкету</button>`
+        : `<button class="btn btn-sm ${inTeam ? "in-team" : "btn-primary"}" data-join="${p.id}">${inTeam ? "✓ В команде" : "🤝 Хочу в команду"}</button>`}
+    </article>`;
+}
+
+function renderTeam(view) {
+  const team = store.get("team", []);
+  const people = allPeople();
+  const mine = store.get("myProfile", null);
+
+  let body = "";
+  if (teamTab === "feed") {
+    const skills = [...new Set(people.flatMap(p => p.skills))].sort((a, b) => a.localeCompare(b, "ru"));
+    const q = teamQuery.trim().toLowerCase();
+    const list = people.filter(p =>
+      (!teamSkill || p.skills.includes(teamSkill)) &&
+      (!q || [p.name, p.interests, p.looking, ...p.skills].join(" ").toLowerCase().includes(q)));
+    body = `
+      <label class="field"><span>Поиск</span><input type="search" id="teamSearch" placeholder="Имя, интерес или навык…" value="${esc(teamQuery)}" autocomplete="off"></label>
+      <div class="chips" style="margin-bottom:16px">
+        <button class="chip ${!teamSkill ? "active" : ""}" data-skill="">Все навыки</button>
+        ${skills.map(s => `<button class="chip ${teamSkill === s ? "active" : ""}" data-skill="${esc(s)}">${esc(s)}</button>`).join("")}
+      </div>
+      ${list.length
+        ? `<div class="people">${list.map((p, i) => personCard(p, people.indexOf(p), team)).join("")}</div>`
+        : emptyState("🔍", "Никого не нашли", "Измени запрос или выбери «Все навыки».")}`;
+  } else if (teamTab === "team") {
+    const members = people.filter(p => team.includes(p.id));
+    body = members.length
+      ? `<div class="people">${members.map(p => personCard(p, people.indexOf(p), team)).join("")}</div>`
+      : emptyState("🤝", "В твоей команде пока никого", "Открой «Ленту анкет» и нажми «Хочу в команду» у тех, с кем хочешь работать.");
+  } else {
+    body = `
+      <section class="card">
+        <h3>${mine ? "✏️ Моя анкета" : "📝 Создай анкету"}</h3>
+        <p class="small muted">Анкета появится в ленте, и другие увидят, чем ты можешь помочь.</p>
+        <form id="profileForm" autocomplete="off">
+          <label class="field"><span>Имя *</span><input type="text" name="name" required maxlength="40" value="${esc(mine?.name)}" placeholder="Как тебя зовут"></label>
+          <label class="field"><span>Навыки * (через запятую)</span><input type="text" name="skills" required maxlength="160" value="${esc(mine?.skills.join(", "))}" placeholder="JavaScript, Дизайн, Презентации"></label>
+          <label class="field"><span>Интересы</span><textarea name="interests" maxlength="200" placeholder="Что тебе интересно">${esc(mine?.interests)}</textarea></label>
+          <label class="field"><span>Кого ищу</span><textarea name="looking" maxlength="200" placeholder="Кто нужен тебе в команду">${esc(mine?.looking)}</textarea></label>
+          <div class="row">
+            <button class="btn btn-primary" type="submit">${mine ? "Сохранить" : "Опубликовать анкету"}</button>
+            ${mine ? `<button class="btn btn-ghost btn-danger" type="button" id="delProfile">Удалить анкету</button>` : ""}
+          </div>
+        </form>
+      </section>`;
+  }
+
+  view.innerHTML = `
+    ${modHead("🤝", "TeamSync", "Найди людей для проекта, олимпиады или хакатона")}
+    <div class="tabs" role="tablist">
+      <button class="${teamTab === "feed" ? "active" : ""}" data-tab="feed">Лента анкет <span>${people.length}</span></button>
+      <button class="${teamTab === "team" ? "active" : ""}" data-tab="team">Моя команда <span>${team.length}</span></button>
+      <button class="${teamTab === "profile" ? "active" : ""}" data-tab="profile">${mine ? "Моя анкета" : "+ Создать анкету"}</button>
+    </div>
+    ${body}`;
+
+  // --- обработчики ---
+  $$("[data-tab]", view).forEach(b => b.onclick = () => { teamTab = b.dataset.tab; renderTeam(view); });
+  $$("[data-skill]", view).forEach(b => b.onclick = () => { teamSkill = b.dataset.skill; renderTeam(view); });
+  const search = $("#teamSearch", view);
+  if (search) search.oninput = e => {
+    teamQuery = e.target.value;
+    const pos = e.target.selectionStart;
+    renderTeam(view);
+    const s = $("#teamSearch", view); s.focus(); s.setSelectionRange(pos, pos);
+  };
+  $$("[data-join]", view).forEach(b => b.onclick = () => {
+    const id = b.dataset.join;
+    const cur = store.get("team", []);
+    const name = people.find(p => p.id === id)?.name;
+    if (cur.includes(id)) { store.set("team", cur.filter(x => x !== id)); toast(`${name} убран(а) из команды`); }
+    else { store.set("team", [...cur, id]); toast(`${name} добавлен(а) в команду 🤝`); }
+    renderTeam(view);
+  });
+  const form = $("#profileForm", view);
+  if (form) form.onsubmit = e => {
+    e.preventDefault();
+    const f = new FormData(form);
+    const skills = f.get("skills").split(",").map(s => s.trim()).filter(Boolean);
+    if (!f.get("name").trim() || !skills.length) return toast("Заполни имя и хотя бы один навык");
+    store.set("myProfile", {
+      id: "me", name: f.get("name").trim(), skills,
+      interests: f.get("interests").trim() || "—", looking: f.get("looking").trim() || "—"
+    });
+    toast("Анкета сохранена ✓");
+    teamTab = "feed";
+    renderTeam(view);
+  };
+  const del = $("#delProfile", view);
+  if (del) del.onclick = () => {
+    if (!confirm("Удалить твою анкету?")) return;
+    store.set("myProfile", null);
+    teamTab = "feed";
+    renderTeam(view);
+  };
+}
+
+/* =====================================================================
+   11. СТАРТ
+   ===================================================================== */
+router();
+</script>
+</body>
+</html>
