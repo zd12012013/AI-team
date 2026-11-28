@@ -104,12 +104,12 @@ function aiContext() {
   if (quiz) {
     if (!quiz.finished) {
       const q = quiz.questions[quiz.i];
-      c.question = { ...q, picked: quiz.answers[quiz.i] !== null ? (q.o ? qOpts(q)[quiz.answers[quiz.i]] : quiz.answers[quiz.i]) : null };
+      c.question = { ...q, picked: quiz.answers[quiz.i] !== null ? ansText(q, quiz.answers[quiz.i]) : null };
     }
     c.level = quiz.level;
     quiz.questions.forEach((q, i) => {
-      if (quiz.answers[i] !== null && quiz.answers[i] !== q.a && (quiz.finished || i !== quiz.i)) {
-        c.mistakes.push({ q: qText(q), picked: q.o ? qOpts(q)[quiz.answers[i]] : quiz.answers[i], correct: q.o ? qOpts(q)[q.a] : q.answer });
+      if (quiz.answers[i] !== null && !isRight(q, quiz.answers[i]) && (quiz.finished || i !== quiz.i)) {
+        c.mistakes.push({ q: qText(q), picked: ansText(q, quiz.answers[i]), correct: rightText(q) });
       }
     });
   }

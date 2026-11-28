@@ -38,7 +38,7 @@ MIN_QUESTIONS = 3
 
 
 def check_subject(sid, data):
-    errors, stats = [], {"topics": 0, "questions": 0, "check": 0, "kz": 0}
+    errors, stats = [], {"topics": 0, "questions": 0, "check": 0, "kz": 0, "olymp": 0, "olymp_real": 0}
     if data.get("id") != sid:
         errors.append(f"поле id должно быть «{sid}»")
     ids = set()
@@ -65,6 +65,9 @@ def check_subject(sid, data):
                         errors.append(f"{where}: на уровне {lv} {len(qs)} вопр. (нужно ≥{MIN_QUESTIONS})")
                     for n, q in enumerate(qs, 1):
                         stats["questions"] += 1
+                        if "source" in q:
+                            stats["olymp"] += 1
+                            stats["olymp_real"] += 1 if q["source"] != "style" else 0
                         o = q.get("o", [])
                         a = q.get("a", 0)
                         if not q.get("q") or not q.get("e"):
@@ -76,6 +79,16 @@ def check_subject(sid, data):
                             errors.append(f"{where}/{lv}#{n}: нужны варианты (o) и верный индекс ответа (a) или поле answer")
                         if len(set(map(str.strip, o))) != len(o):
                             errors.append(f"{where}/{lv}#{n}: повторяются варианты ответа")
+                        if "source" in q:            # олимпиадная задача нового формата
+                            src = q["source"]
+                            if src != "style" and not (isinstance(src, dict) and src.get("name") and src.get("year")):
+                                errors.append(f"{where}/{lv}#{n}: source — «style» или {{name, year, stage, grade, problem}}")
+                            if src == "style" and not q.get("check"):
+                                errors.append(f"{where}/{lv}#{n}: задача «в стиле олимпиады» должна иметь check: true")
+                            if not (1 <= len(q.get("hints", [])) <= 2):
+                                errors.append(f"{where}/{lv}#{n}: нужно 1–2 подсказки (hints)")
+                            if not q.get("solution"):
+                                errors.append(f"{where}/{lv}#{n}: нужно полное решение (solution)")
                         kz = q.get("kz")
                         if kz:
                             if o and len(kz.get("o", [])) != len(o):
@@ -104,7 +117,8 @@ def main():
             "(window.NOVA_DATA = window.NOVA_DATA || {})[%s] = %s;\n"
             % (sid, json.dumps(sid), json.dumps(data, ensure_ascii=False)), encoding="utf-8")
         print(f"  {sid:12} классов: {len(data['classes'])}, тем: {stats['topics']}, "
-              f"вопросов: {stats['questions']}, на проверку: {stats['check']}, на казахском: {stats['kz']}")
+              f"вопросов: {stats['questions']}, на проверку: {stats['check']}, на казахском: {stats['kz']}, "
+              f"олимп. задач: {stats['olymp']} (с реальным источником: {stats['olymp_real']})")
     if all_errors:
         print("\nОШИБКИ В ДАННЫХ:")
         for e in all_errors:
