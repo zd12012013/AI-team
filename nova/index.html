@@ -3,30 +3,35 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>NOVA Lite — Smart Student Platform</title>
-<meta name="description" content="NOVA Lite: тесты и анализ ошибок, объяснения через предметы, планировщик заданий и поиск команды.">
-<meta name="theme-color" content="#0b0d14">
+<title>NOVA — школьная программа Казахстана</title>
+<meta name="description" content="NOVA: темы школьной программы РК с 5 по 11 класс, тесты четырёх уровней сложности, прогресс, слабые темы и AI-помощник «Объясни ошибку».">
+<meta name="theme-color" content="#22A06B">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>">
 <style>
 /* =====================================================================
-   1. ПЕРЕМЕННЫЕ И БАЗА
+   1. ПЕРЕМЕННЫЕ И БАЗА (светлая тема, основной цвет — зелёный)
    ===================================================================== */
 :root {
-  --bg: #0b0d14;
-  --bg-2: #11141e;
-  --card: #161a26;
-  --card-2: #1c2130;
-  --line: #262c3d;
-  --text: #eef0f7;
-  --muted: #8d93a8;
-  --accent: #8b7bff;
-  --accent-2: #5ee7df;
-  --ok: #3ddc97;
-  --warn: #ffb347;
-  --danger: #ff5c7a;
-  --radius: 20px;
+  --bg: #f5f7f6;
+  --bg-2: #eef2f0;
+  --card: #ffffff;
+  --card-2: #f3f6f4;
+  --line: #e1e7e4;
+  --text: #17231e;
+  --muted: #5d6b65;
+  --accent: #22A06B;
+  --accent-dark: #1a7f55;
+  --accent-light: #e6f5ee;
+  --accent-2: #4fc79a;
+  --ok: #1f9d63;
+  --warn: #c27a00;
+  --warn-bg: #fff4dc;
+  --danger: #d64550;
+  --danger-bg: #fdecee;
+  --radius: 18px;
   --radius-sm: 12px;
-  --shadow: 0 10px 30px rgba(0, 0, 0, .35);
+  --shadow: 0 6px 20px rgba(23, 35, 30, .06);
+  --shadow-hover: 0 12px 28px rgba(23, 35, 30, .12);
   --ease: cubic-bezier(.2, .8, .2, 1);
 }
 * { box-sizing: border-box; }
@@ -34,246 +39,251 @@ html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0; min-height: 100vh;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  color: var(--text); line-height: 1.5;
-  background:
-    radial-gradient(700px 400px at 90% -10%, rgba(139, 123, 255, .18), transparent 60%),
-    radial-gradient(600px 400px at -10% 30%, rgba(94, 231, 223, .08), transparent 60%),
-    var(--bg);
-  background-attachment: fixed;
+  color: var(--text); line-height: 1.5; background: var(--bg);
 }
 h1, h2, h3, h4 { margin: 0 0 .5em; line-height: 1.2; letter-spacing: -.01em; }
 p { margin: 0 0 .8em; }
-a { color: var(--accent); }
+a { color: var(--accent-dark); }
 button, input, select, textarea { font: inherit; color: inherit; }
 .muted { color: var(--muted); }
 .small { font-size: .85rem; }
 .hidden { display: none !important; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-.wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+:focus-visible { outline: 3px solid rgba(34, 160, 107, .45); outline-offset: 2px; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
 
 /* =====================================================================
    2. ШАПКА
    ===================================================================== */
-.topbar {
-  position: sticky; top: 0; z-index: 20;
-  background: rgba(11, 13, 20, .78); backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--line);
-}
-.topbar .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+.topbar { position: sticky; top: 0; z-index: 20; background: rgba(255, 255, 255, .92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+.topbar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 10px; height: 62px; }
 .logo { display: flex; flex-direction: column; text-decoration: none; color: var(--text); }
-.logo b { font-size: 1.35rem; letter-spacing: .06em; font-weight: 800; }
+.logo b { font-size: 1.3rem; letter-spacing: .06em; font-weight: 800; }
 .logo b span { color: var(--accent); display: inline-block; transition: transform .6s var(--ease); }
 .logo:hover b span { transform: rotate(180deg) scale(1.15); }
-.logo small { font-size: .62rem; letter-spacing: .22em; color: var(--muted); font-weight: 600; }
-.top-nav { display: none; gap: 4px; }
-.top-nav a {
-  text-decoration: none; color: var(--muted); font-size: .9rem; font-weight: 600;
-  padding: 8px 12px; border-radius: 999px; transition: background .2s, color .2s;
-}
-.top-nav a:hover { color: var(--text); background: var(--card); }
-.top-nav a.active { color: var(--text); background: var(--card-2); }
+.logo small { white-space: nowrap; font-size: .6rem; letter-spacing: .2em; color: var(--muted); font-weight: 700; }
+.top-nav { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+.top-nav a { flex: none; text-decoration: none; color: var(--muted); font-size: .88rem; font-weight: 600; padding: 8px 10px; border-radius: 999px; transition: background .2s, color .2s; }
+.top-nav a:hover { color: var(--text); background: var(--bg-2); }
+.top-nav a.active { color: var(--accent-dark); background: var(--accent-light); }
+.top-nav .lbl { display: none; }
 
 /* =====================================================================
-   3. ОБЩИЕ КОМПОНЕНТЫ: карточки, кнопки, поля, чипы
+   3. ОБЩИЕ КОМПОНЕНТЫ
    ===================================================================== */
-main { padding: 20px 0 60px; }
-.view { animation: viewIn .45s var(--ease); }
-@keyframes viewIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
-
-.card {
-  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 18px; margin-bottom: 16px;
-}
+main { padding: 18px 0 70px; }
+.view { animation: viewIn .4s var(--ease); }
+@keyframes viewIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; box-shadow: var(--shadow); }
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  border: 1px solid var(--line); background: var(--card-2); color: var(--text);
-  padding: 11px 16px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;
-  text-decoration: none; transition: transform .15s var(--ease), background .2s, border-color .2s, opacity .2s;
+  border: 1px solid var(--line); background: var(--card); color: var(--text);
+  padding: 11px 16px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 650;
+  text-decoration: none; transition: transform .15s var(--ease), background .2s, border-color .2s, box-shadow .2s;
 }
-.btn:hover { border-color: #3a4260; transform: translateY(-1px); }
+.btn:hover { border-color: #c5d2cc; transform: translateY(-1px); box-shadow: var(--shadow); }
 .btn:active { transform: scale(.97); }
-.btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
-.btn-primary { background: var(--accent); border-color: var(--accent); color: #0b0d14; }
-.btn-primary:hover { background: #a194ff; border-color: #a194ff; }
-.btn-ghost { background: transparent; }
+.btn:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+.btn-soft { background: var(--accent-light); border-color: transparent; color: var(--accent-dark); }
+.btn-ghost { background: transparent; box-shadow: none; }
 .btn-danger { color: var(--danger); }
 .btn-sm { padding: 7px 11px; font-size: .85rem; border-radius: 10px; }
 .btn-block { width: 100%; }
 .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .row.between { justify-content: space-between; }
-
 label.field { display: block; margin-bottom: 12px; }
-label.field > span { display: block; font-size: .82rem; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
-input[type=text], input[type=search], input[type=datetime-local], select, textarea {
-  width: 100%; background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--radius-sm);
-  padding: 11px 13px; transition: border-color .2s, box-shadow .2s; color-scheme: dark;
+label.field > span { display: block; font-size: .82rem; color: var(--muted); margin-bottom: 6px; font-weight: 650; }
+input[type=text], input[type=search], input[type=password], input[type=datetime-local], select, textarea {
+  width: 100%; background: #fff; border: 1.5px solid var(--line); border-radius: var(--radius-sm);
+  padding: 11px 13px; transition: border-color .2s, box-shadow .2s;
 }
-input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(139, 123, 255, .2); }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(34, 160, 107, .18); }
 textarea { resize: vertical; min-height: 70px; }
-
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip {
-  font-size: .78rem; font-weight: 600; padding: 4px 10px; border-radius: 999px;
-  background: var(--card-2); border: 1px solid var(--line); color: var(--muted);
-}
+.chip { font-size: .78rem; font-weight: 650; padding: 4px 10px; border-radius: 999px; background: var(--card-2); border: 1px solid var(--line); color: var(--muted); }
 button.chip { cursor: pointer; transition: all .2s; }
 button.chip:hover { color: var(--text); }
-button.chip.active, .chip.on { background: rgba(139, 123, 255, .16); border-color: var(--accent); color: var(--text); }
-
+button.chip.active, .chip.on { background: var(--accent-light); border-color: var(--accent); color: var(--accent-dark); }
 .seg { display: inline-flex; background: var(--bg-2); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
-.seg button { border: 0; background: transparent; padding: 7px 13px; border-radius: 999px; cursor: pointer; color: var(--muted); font-weight: 600; font-size: .85rem; transition: all .2s; }
-.seg button.active { background: var(--card-2); color: var(--text); }
-
-.empty {
-  text-align: center; padding: 36px 18px; border: 1px dashed var(--line); border-radius: var(--radius);
-  color: var(--muted); background: rgba(22, 26, 38, .5);
-}
-.empty .e-icon { font-size: 2.4rem; display: block; margin-bottom: 8px; }
+.seg button { border: 0; background: transparent; padding: 7px 13px; border-radius: 999px; cursor: pointer; color: var(--muted); font-weight: 650; font-size: .85rem; transition: all .2s; }
+.seg button.active { background: #fff; color: var(--accent-dark); box-shadow: var(--shadow); }
+.empty { text-align: center; padding: 34px 18px; border: 1.5px dashed #cfdad5; border-radius: var(--radius); color: var(--muted); background: #fbfcfc; }
+.empty .e-icon { font-size: 2.3rem; display: block; margin-bottom: 8px; }
 .empty b { color: var(--text); display: block; margin-bottom: 4px; }
-
 .progress { height: 8px; background: var(--bg-2); border-radius: 999px; overflow: hidden; }
 .progress > i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius: inherit; transition: width .6s var(--ease); }
+.badge-check { font-size: .72rem; font-weight: 700; color: var(--warn); background: var(--warn-bg); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+.pct { font-weight: 800; }
+.pct.good { color: var(--ok); } .pct.mid { color: var(--warn); } .pct.bad { color: var(--danger); }
 
-/* Шапка модуля с кнопкой «Назад» */
-.mod-head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
-.back {
-  width: 42px; height: 42px; flex: none; display: grid; place-items: center;
-  border-radius: 12px; background: var(--card); border: 1px solid var(--line);
-  color: var(--text); text-decoration: none; font-size: 1.2rem; transition: transform .2s var(--ease), border-color .2s;
-}
+.mod-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.back { width: 42px; height: 42px; flex: none; display: grid; place-items: center; border-radius: 12px; background: var(--card); border: 1px solid var(--line); color: var(--text); text-decoration: none; font-size: 1.2rem; transition: transform .2s var(--ease), border-color .2s; }
 .back:hover { transform: translateX(-3px); border-color: var(--accent); }
-.mod-head h1 { margin: 0; font-size: 1.45rem; }
+.mod-head h1 { margin: 0; font-size: 1.4rem; }
 .mod-head p { margin: 0; color: var(--muted); font-size: .9rem; }
-
-.toast {
-  position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); opacity: 0;
-  background: var(--card-2); border: 1px solid var(--line); padding: 12px 18px; border-radius: 14px;
-  box-shadow: var(--shadow); transition: all .3s var(--ease); pointer-events: none; z-index: 50; font-weight: 600;
-  max-width: calc(100% - 32px); text-align: center;
-}
+.crumbs { display: flex; flex-wrap: wrap; gap: 4px; font-size: .82rem; margin-bottom: 8px; color: var(--muted); }
+.crumbs a { color: var(--muted); text-decoration: none; }
+.crumbs a:hover { color: var(--accent-dark); text-decoration: underline; }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); opacity: 0; background: var(--text); color: #fff; padding: 12px 18px; border-radius: 14px; box-shadow: var(--shadow-hover); transition: all .3s var(--ease); pointer-events: none; z-index: 70; font-weight: 600; max-width: calc(100% - 32px); text-align: center; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
 /* =====================================================================
    4. ГЛАВНАЯ
    ===================================================================== */
-.hero { padding: 18px 0 8px; }
-.hero .eyebrow { font-size: .72rem; letter-spacing: .22em; color: var(--accent-2); font-weight: 700; margin-bottom: 10px; }
-.hero h1 { font-size: clamp(2rem, 7vw, 3.2rem); font-weight: 800; margin-bottom: 12px; }
-.hero h1 em { font-style: normal; background: linear-gradient(90deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.hero p { color: var(--muted); max-width: 520px; }
-
-.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 18px 0; }
-.stat { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; }
-.stat b { display: block; font-size: 1.5rem; font-weight: 800; }
-.stat span { font-size: .75rem; color: var(--muted); }
-
-.modules { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-.module {
-  position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 6px;
-  min-height: 150px; padding: 18px; border-radius: var(--radius); text-decoration: none; color: var(--text);
-  background: var(--card); border: 1px solid var(--line);
-  transition: transform .35s var(--ease), border-color .3s, box-shadow .3s;
+.hero { padding: 10px 0 4px; }
+.hero .eyebrow { font-size: .72rem; letter-spacing: .2em; color: var(--accent-dark); font-weight: 800; margin-bottom: 8px; }
+.hero h1 { font-size: clamp(1.9rem, 6.5vw, 3rem); font-weight: 850; margin-bottom: 10px; }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.hero p { color: var(--muted); max-width: 560px; }
+.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 16px 0 22px; }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; box-shadow: var(--shadow); }
+.stat b { display: block; font-size: 1.45rem; font-weight: 850; color: var(--accent-dark); }
+.stat span { font-size: .76rem; color: var(--muted); }
+.section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 8px 0 12px; }
+.section-title h2 { margin: 0; font-size: 1.2rem; }
+.subjects { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px; }
+.subject {
+  position: relative; display: flex; flex-direction: column; gap: 6px; padding: 16px; min-height: 132px;
+  border-radius: var(--radius); background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow);
+  text-decoration: none; color: var(--text); transition: transform .3s var(--ease), box-shadow .3s, border-color .3s;
 }
-.module::after {
-  content: ""; position: absolute; inset: auto -40px -40px auto; width: 130px; height: 130px; border-radius: 50%;
-  background: var(--glow); opacity: .18; filter: blur(6px); transition: transform .5s var(--ease), opacity .3s;
-}
-.module:hover { transform: translateY(-4px); border-color: var(--glow); box-shadow: 0 14px 34px rgba(0, 0, 0, .4); }
-.module:hover::after { transform: scale(1.5); opacity: .3; }
-.module .m-emoji { font-size: 2rem; align-self: flex-start; transition: transform .35s var(--ease); }
-.module:hover .m-emoji { transform: scale(1.15) rotate(-6deg); }
-.module h3 { margin: auto 0 0; font-size: 1.15rem; }
-.module p { margin: 0; font-size: .85rem; color: var(--muted); }
+.subject:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); border-color: var(--c, var(--accent)); }
+.s-icon { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; font-size: 1.5rem; background: color-mix(in srgb, var(--c, var(--accent)) 14%, #fff); transition: transform .3s var(--ease); }
+.subject:hover .s-icon { transform: scale(1.08) rotate(-5deg); }
+.subject b { font-size: 1rem; }
+.subject small { color: var(--muted); font-size: .78rem; }
+.subject .progress { margin-top: auto; height: 6px; }
+.soon { position: absolute; top: 12px; right: 12px; font-size: .68rem; font-weight: 800; color: var(--muted); background: var(--bg-2); padding: 2px 8px; border-radius: 999px; }
+.tools { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.tool { display: flex; gap: 10px; align-items: center; padding: 14px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); text-decoration: none; color: var(--text); transition: transform .25s var(--ease), border-color .2s; }
+.tool:hover { transform: translateY(-2px); border-color: var(--accent); }
+.tool span { font-size: 1.5rem; }
+.tool b { display: block; font-size: .95rem; }
+.tool small { color: var(--muted); font-size: .76rem; }
 
 /* =====================================================================
-   5. WEAKPOINT
+   5. ПРЕДМЕТ → КЛАСС → ТЕМА
    ===================================================================== */
-.subj-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 18px; }
-.subj {
-  text-align: left; cursor: pointer; padding: 16px; border-radius: var(--radius); background: var(--card);
-  border: 1px solid var(--line); transition: transform .25s var(--ease), border-color .2s;
+.grades { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.grade {
+  display: flex; flex-direction: column; gap: 8px; padding: 18px; border-radius: var(--radius); background: var(--card);
+  border: 1px solid var(--line); box-shadow: var(--shadow); text-decoration: none; color: var(--text);
+  transition: transform .25s var(--ease), border-color .2s, box-shadow .25s;
 }
-.subj:hover { transform: translateY(-3px); border-color: var(--accent); }
-.subj .s-emoji { font-size: 1.7rem; }
-.subj b { display: block; margin: 6px 0 2px; font-size: 1.05rem; }
-.subj small { color: var(--muted); }
+.grade:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: var(--shadow-hover); }
+.grade .g-num { font-size: 2rem; font-weight: 850; color: var(--accent-dark); line-height: 1; }
+.grade small { color: var(--muted); }
+.big-progress { display: flex; align-items: center; gap: 12px; }
+.big-progress .progress { flex: 1; height: 10px; }
+.section { margin-bottom: 18px; }
+.section h3 { font-size: .9rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
+.topics { display: grid; gap: 8px; }
+.topic-row {
+  display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 14px; background: var(--card);
+  border: 1px solid var(--line); text-decoration: none; color: var(--text); transition: transform .2s var(--ease), border-color .2s, background .2s;
+}
+.topic-row:hover { transform: translateX(3px); border-color: var(--accent); }
+.topic-row.done { background: var(--accent-light); border-color: #bfe5d2; }
+.tick { width: 26px; height: 26px; flex: none; border-radius: 50%; display: grid; place-items: center; border: 2px solid #c9d5cf; font-size: .8rem; font-weight: 900; color: #fff; }
+.topic-row.done .tick { background: var(--accent); border-color: var(--accent); }
+.topic-row .t-name { flex: 1; font-weight: 650; }
+.topic-row .t-side { display: flex; align-items: center; gap: 6px; font-size: .8rem; color: var(--muted); }
+.explain-card { border-left: 4px solid var(--accent); }
+.explain-card p:last-child { margin-bottom: 0; }
+.levels { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.level {
+  text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 4px; padding: 16px; border-radius: var(--radius);
+  background: var(--card); border: 1.5px solid var(--line); box-shadow: var(--shadow); transition: transform .25s var(--ease), border-color .2s, box-shadow .2s;
+}
+.level:hover { transform: translateY(-3px); border-color: var(--lc); box-shadow: var(--shadow-hover); }
+.level .l-dot { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-weight: 900; color: #fff; background: var(--lc); }
+.level b { font-size: 1.02rem; margin-top: 4px; }
+.level small { color: var(--muted); }
+.level.passed { border-color: var(--accent); background: linear-gradient(180deg, var(--accent-light), #fff 70%); }
 
-.q-top { display: flex; justify-content: space-between; color: var(--muted); font-size: .85rem; margin-bottom: 8px; }
-.question h2 { font-size: 1.2rem; margin: 14px 0 16px; }
+/* =====================================================================
+   6. ТЕСТ И РЕЗУЛЬТАТ
+   ===================================================================== */
+.q-top { display: flex; justify-content: space-between; color: var(--muted); font-size: .85rem; margin-bottom: 8px; gap: 10px; }
+.question h2 { font-size: 1.15rem; margin: 14px 0 16px; white-space: pre-line; }
 .options { display: grid; gap: 8px; }
-.option {
-  text-align: left; padding: 13px 15px; border-radius: var(--radius-sm); background: var(--bg-2);
-  border: 1px solid var(--line); cursor: pointer; transition: all .2s var(--ease);
-}
-.option:hover { border-color: #3a4260; transform: translateX(3px); }
-.option.picked { border-color: var(--accent); background: rgba(139, 123, 255, .14); }
-
+.option { text-align: left; padding: 13px 15px; border-radius: var(--radius-sm); background: #fff; border: 1.5px solid var(--line); cursor: pointer; transition: all .2s var(--ease); }
+.option:hover { border-color: #b9cbc2; transform: translateX(3px); }
+.option.picked { border-color: var(--accent); background: var(--accent-light); }
 .result-top { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
-.ring {
-  --p: 0; width: 120px; height: 120px; border-radius: 50%; display: grid; place-items: center; flex: none;
-  background: conic-gradient(var(--ring-c, var(--accent)) calc(var(--p) * 1%), var(--bg-2) 0);
-}
-.ring > div { width: 92px; height: 92px; border-radius: 50%; background: var(--card); display: grid; place-items: center; font-size: 1.7rem; font-weight: 800; }
-.mistake { border-left: 3px solid var(--danger); padding: 10px 12px; background: var(--bg-2); border-radius: 0 12px 12px 0; margin-bottom: 10px; }
+.ring { --p: 0; width: 116px; height: 116px; border-radius: 50%; display: grid; place-items: center; flex: none; background: conic-gradient(var(--ring-c, var(--accent)) calc(var(--p) * 1%), var(--bg-2) 0); }
+.ring > div { width: 90px; height: 90px; border-radius: 50%; background: var(--card); display: grid; place-items: center; font-size: 1.6rem; font-weight: 850; }
+.mistake { border-left: 3px solid var(--danger); padding: 10px 12px; background: #fff8f8; border-radius: 0 12px 12px 0; margin-bottom: 10px; }
 .mistake p { margin: 4px 0; font-size: .92rem; }
 .mistake .bad { color: var(--danger); }
-.mistake .good { color: var(--ok); }
-.topic-row { margin-bottom: 12px; }
-.topic-row .row { justify-content: space-between; font-size: .9rem; margin-bottom: 5px; }
-.weak { padding: 12px 14px; border-radius: 14px; background: rgba(255, 179, 71, .08); border: 1px solid rgba(255, 179, 71, .3); margin-bottom: 8px; }
-.weak b { color: var(--warn); }
+.mistake .good { color: var(--ok); font-weight: 650; }
+.weak { display: flex; align-items: center; gap: 10px; justify-content: space-between; padding: 12px 14px; border-radius: 14px; background: var(--warn-bg); border: 1px solid #f3d9a4; margin-bottom: 8px; text-decoration: none; color: var(--text); transition: transform .2s var(--ease); }
+.weak:hover { transform: translateX(3px); }
+.weak small { color: var(--muted); display: block; }
 .hist-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .hist-item:last-child { border-bottom: 0; }
-.pct { font-weight: 800; }
-.pct.good { color: var(--ok); } .pct.mid { color: var(--warn); } .pct.bad { color: var(--danger); }
 
 /* =====================================================================
-   6. HOMETRY
+   7. AI-ПАНЕЛЬ «ОБЪЯСНИ ОШИБКУ»
+   ===================================================================== */
+.ai-backdrop { position: fixed; inset: 0; background: rgba(23, 35, 30, .35); opacity: 0; pointer-events: none; transition: opacity .3s; z-index: 40; }
+.ai-backdrop.open { opacity: 1; pointer-events: auto; }
+.ai-panel {
+  position: fixed; z-index: 50; left: 0; right: 0; bottom: 0; height: 88vh; background: #fff;
+  border-radius: 22px 22px 0 0; box-shadow: 0 -10px 40px rgba(0, 0, 0, .18);
+  display: flex; flex-direction: column; transform: translateY(105%); transition: transform .35s var(--ease);
+}
+.ai-panel { visibility: hidden; transition: transform .35s var(--ease), visibility .35s; }
+.ai-panel.open { transform: none; visibility: visible; }
+.ai-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.ai-head b { display: block; }
+.ai-head small { color: var(--muted); font-size: .78rem; }
+.ai-mode { font-size: .72rem; font-weight: 800; padding: 3px 9px; border-radius: 999px; background: var(--bg-2); color: var(--muted); }
+.ai-mode.on { background: var(--accent-light); color: var(--accent-dark); }
+.ai-body { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.ai-ctx { background: var(--card-2); border-radius: 14px; padding: 10px 12px; font-size: .88rem; }
+.ai-ctx p { margin: 2px 0; }
+.msg { max-width: 92%; padding: 10px 13px; border-radius: 16px; font-size: .94rem; animation: viewIn .3s var(--ease); word-wrap: break-word; }
+.msg.bot { background: var(--accent-light); border-bottom-left-radius: 4px; align-self: flex-start; }
+.msg.me { background: var(--text); color: #fff; border-bottom-right-radius: 4px; align-self: flex-end; }
+.msg ul { margin: 6px 0; padding-left: 20px; }
+.msg .sources { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #b8dcca; font-size: .85rem; }
+.msg .sources a { display: block; margin: 3px 0; }
+.typing span { display: inline-block; width: 7px; height: 7px; margin: 0 2px; border-radius: 50%; background: var(--accent); animation: blink 1s infinite; }
+.typing span:nth-child(2) { animation-delay: .2s; } .typing span:nth-child(3) { animation-delay: .4s; }
+@keyframes blink { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
+.ai-foot { display: flex; gap: 8px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); }
+.ai-foot input { flex: 1; }
+.explain-btn { margin-top: 6px; }
+
+/* =====================================================================
+   8. МОДУЛИ HOMETRY, TASKPLANNER, TEAMSYNC
    ===================================================================== */
 .ht-grid { display: grid; gap: 12px; }
-.ht-card {
-  text-align: left; cursor: pointer; display: flex; gap: 14px; align-items: flex-start; padding: 16px;
-  border-radius: var(--radius); background: var(--card); border: 1px solid var(--line);
-  transition: transform .25s var(--ease), border-color .2s;
-}
-.ht-card:hover { transform: translateY(-3px); border-color: var(--accent-2); }
-.ht-card .ht-emoji { font-size: 2rem; width: 52px; height: 52px; flex: none; display: grid; place-items: center; background: var(--bg-2); border-radius: 14px; }
+.ht-card { text-align: left; cursor: pointer; display: flex; gap: 14px; align-items: flex-start; padding: 16px; border-radius: var(--radius); background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow); transition: transform .25s var(--ease), border-color .2s; }
+.ht-card:hover { transform: translateY(-3px); border-color: var(--accent); }
+.ht-card .ht-emoji { font-size: 2rem; width: 52px; height: 52px; flex: none; display: grid; place-items: center; background: var(--accent-light); border-radius: 14px; }
 .ht-card b { display: block; font-size: 1.05rem; }
 .ht-card p { margin: 4px 0 8px; font-size: .88rem; color: var(--muted); }
 .explain { font-size: 1.02rem; }
 .items { display: grid; gap: 8px; margin-top: 10px; }
-.item { display: flex; gap: 10px; align-items: flex-start; background: var(--bg-2); border-radius: 12px; padding: 10px 12px; font-size: .92rem; }
+.item { display: flex; gap: 10px; align-items: flex-start; background: var(--card-2); border-radius: 12px; padding: 10px 12px; font-size: .92rem; }
 .item span:first-child { font-size: 1.3rem; }
 .need { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .steps { counter-reset: s; list-style: none; padding: 0; margin: 0; }
 .steps li { counter-increment: s; position: relative; padding: 0 0 12px 40px; }
-.steps li::before {
-  content: counter(s); position: absolute; left: 0; top: 0; width: 28px; height: 28px; border-radius: 50%;
-  display: grid; place-items: center; background: var(--card-2); border: 1px solid var(--line); font-weight: 700; font-size: .85rem;
-}
-.conclusion { background: linear-gradient(135deg, rgba(94, 231, 223, .12), rgba(139, 123, 255, .12)); border: 1px solid rgba(94, 231, 223, .3); border-radius: 16px; padding: 14px 16px; }
+.steps li::before { content: counter(s); position: absolute; left: 0; top: 0; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-light); color: var(--accent-dark); font-weight: 800; font-size: .85rem; }
+.conclusion { background: var(--accent-light); border: 1px solid #bfe5d2; border-radius: 16px; padding: 14px 16px; }
 .safety { font-size: .85rem; color: var(--warn); margin-top: 10px; }
-
-/* =====================================================================
-   7. TASKPLANNER
-   ===================================================================== */
 .form-grid { display: grid; gap: 0 12px; }
-.task {
-  display: flex; gap: 12px; align-items: flex-start; padding: 14px; margin-bottom: 10px;
-  background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--line);
-  border-radius: 16px; transition: transform .2s var(--ease), opacity .3s, border-color .2s;
-  animation: viewIn .35s var(--ease);
-}
+.task { display: flex; gap: 12px; align-items: flex-start; padding: 14px; margin-bottom: 10px; background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 16px; transition: transform .2s var(--ease), opacity .3s; animation: viewIn .35s var(--ease); }
 .task:hover { transform: translateX(2px); }
-.task.overdue { border-left-color: var(--danger); background: linear-gradient(90deg, rgba(255, 92, 122, .08), var(--card) 40%); }
-.task.urgent { border-left-color: var(--warn); background: linear-gradient(90deg, rgba(255, 179, 71, .08), var(--card) 40%); }
-.task.done { opacity: .55; border-left-color: var(--ok); }
+.task.overdue { border-left-color: var(--danger); background: linear-gradient(90deg, var(--danger-bg), #fff 45%); }
+.task.urgent { border-left-color: var(--warn); background: linear-gradient(90deg, var(--warn-bg), #fff 45%); }
+.task.done { opacity: .6; border-left-color: var(--ok); }
 .task.done .t-title { text-decoration: line-through; }
-.check {
-  width: 26px; height: 26px; flex: none; border-radius: 8px; border: 2px solid #3a4260; background: transparent;
-  cursor: pointer; display: grid; place-items: center; transition: all .2s; color: #0b0d14; font-weight: 900; font-size: .85rem;
-}
+.check { width: 26px; height: 26px; flex: none; border-radius: 8px; border: 2px solid #b9c7c0; background: #fff; cursor: pointer; display: grid; place-items: center; transition: all .2s; color: #fff; font-weight: 900; font-size: .85rem; }
 .check:hover { border-color: var(--ok); }
 .task.done .check { background: var(--ok); border-color: var(--ok); }
 .t-body { flex: 1; min-width: 0; }
@@ -281,53 +291,46 @@ button.chip.active, .chip.on { background: rgba(139, 123, 255, .16); border-colo
 .t-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; font-size: .8rem; }
 .t-actions { display: flex; gap: 4px; }
 .icon-btn { border: 0; background: transparent; cursor: pointer; padding: 6px; border-radius: 8px; font-size: 1rem; transition: background .2s; }
-.icon-btn:hover { background: var(--card-2); }
-.prio-high { color: var(--danger); border-color: rgba(255, 92, 122, .4); }
-.prio-medium { color: var(--warn); border-color: rgba(255, 179, 71, .4); }
-.prio-low { color: var(--ok); border-color: rgba(61, 220, 151, .4); }
-.deadline.overdue { color: var(--danger); border-color: rgba(255, 92, 122, .5); }
-.deadline.urgent { color: var(--warn); border-color: rgba(255, 179, 71, .5); }
-
-/* =====================================================================
-   8. TEAMSYNC
-   ===================================================================== */
+.icon-btn:hover { background: var(--bg-2); }
+.prio-high { color: var(--danger); border-color: #f2b8bd; }
+.prio-medium { color: var(--warn); border-color: #f0d199; }
+.prio-low { color: var(--ok); border-color: #a9dcc3; }
+.deadline.overdue { color: var(--danger); border-color: #f2b8bd; }
+.deadline.urgent { color: var(--warn); border-color: #f0d199; }
 .tabs { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; }
-.tabs button { flex: none; border: 1px solid var(--line); background: var(--card); padding: 9px 14px; border-radius: 999px; cursor: pointer; font-weight: 600; color: var(--muted); transition: all .2s; }
-.tabs button.active { color: var(--text); border-color: var(--accent); background: rgba(139, 123, 255, .14); }
-.tabs button span { font-size: .75rem; background: var(--card-2); padding: 1px 7px; border-radius: 999px; margin-left: 4px; }
+.tabs button { flex: none; border: 1px solid var(--line); background: var(--card); padding: 9px 14px; border-radius: 999px; cursor: pointer; font-weight: 650; color: var(--muted); transition: all .2s; }
+.tabs button.active { color: var(--accent-dark); border-color: var(--accent); background: var(--accent-light); }
+.tabs button span { font-size: .75rem; background: var(--bg-2); padding: 1px 7px; border-radius: 999px; margin-left: 4px; }
 .people { display: grid; gap: 12px; }
-.person {
-  display: flex; flex-direction: column; gap: 8px; padding: 16px; border-radius: var(--radius);
-  background: var(--card); border: 1px solid var(--line); transition: transform .25s var(--ease), border-color .2s;
-  animation: viewIn .35s var(--ease);
-}
-.person:hover { transform: translateY(-3px); border-color: #3a4260; }
-.person.mine { border-color: rgba(94, 231, 223, .45); }
+.person { display: flex; flex-direction: column; gap: 8px; padding: 16px; border-radius: var(--radius); background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow); transition: transform .25s var(--ease), border-color .2s; animation: viewIn .35s var(--ease); }
+.person:hover { transform: translateY(-3px); border-color: #c5d2cc; }
+.person.mine { border-color: var(--accent); }
 .p-head { display: flex; align-items: center; gap: 12px; }
-.avatar { width: 46px; height: 46px; flex: none; border-radius: 14px; display: grid; place-items: center; font-weight: 800; font-size: 1.1rem; color: #0b0d14; }
+.avatar { width: 46px; height: 46px; flex: none; border-radius: 14px; display: grid; place-items: center; font-weight: 800; font-size: 1.1rem; color: #fff; }
 .p-head b { display: block; }
 .p-head small { color: var(--muted); }
 .person p { margin: 0; font-size: .9rem; }
-.person .label { color: var(--muted); font-size: .78rem; font-weight: 600; }
+.person .label { color: var(--muted); font-size: .78rem; font-weight: 650; }
 .person .btn { margin-top: auto; }
-.in-team { background: rgba(61, 220, 151, .12); border-color: rgba(61, 220, 151, .5); color: var(--ok); }
+.in-team { background: var(--accent-light); border-color: var(--accent); color: var(--accent-dark); }
 
 /* =====================================================================
    9. АДАПТИВНОСТЬ
    ===================================================================== */
 @media (min-width: 720px) {
-  main { padding-top: 32px; }
-  .top-nav { display: flex; }
-  .module { min-height: 190px; padding: 24px; }
-  .module .m-emoji { font-size: 2.6rem; }
-  .module h3 { font-size: 1.35rem; }
-  .module p { font-size: .95rem; }
-  .stat b { font-size: 1.9rem; }
+  main { padding-top: 28px; }
+  .top-nav .lbl { display: inline; }
+  .stats { grid-template-columns: repeat(4, 1fr); }
+  .subjects { grid-template-columns: repeat(3, 1fr); }
+  .grades { grid-template-columns: repeat(3, 1fr); }
+  .levels { grid-template-columns: repeat(4, 1fr); }
+  .tools { grid-template-columns: repeat(4, 1fr); }
   .ht-grid, .people { grid-template-columns: repeat(2, 1fr); }
   .form-grid { grid-template-columns: 2fr 1fr; }
-  .subj-grid { grid-template-columns: repeat(4, 1fr); }
+  .ai-panel { left: auto; top: 0; width: 440px; height: 100vh; border-radius: 22px 0 0 22px; transform: translateX(105%); }
 }
 @media (min-width: 1000px) {
+  .subjects { grid-template-columns: repeat(5, 1fr); }
   .people { grid-template-columns: repeat(3, 1fr); }
   .two-col { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; align-items: start; }
 }
@@ -345,16 +348,32 @@ button.chip.active, .chip.on { background: rgba(139, 123, 255, .16); border-colo
       <b><span>✦</span> NOVA</b>
       <small>SMART STUDENT PLATFORM</small>
     </a>
-    <nav class="top-nav" aria-label="Модули">
-      <a href="#/weakpoint" data-nav="weakpoint">🧠 WeakPoint</a>
-      <a href="#/hometry" data-nav="hometry">🔍 HomeTry</a>
-      <a href="#/tasks" data-nav="tasks">📅 TaskPlanner</a>
-      <a href="#/team" data-nav="team">🤝 TeamSync</a>
+    <nav class="top-nav" aria-label="Разделы">
+      <a href="#/" data-nav="">📚<span class="lbl"> Предметы</span></a>
+      <a href="#/weak" data-nav="weak">🧠<span class="lbl"> WeakPoint</span></a>
+      <a href="#/tasks" data-nav="tasks">📅<span class="lbl"> Задачи</span></a>
+      <a href="#/team" data-nav="team">🤝<span class="lbl"> Команда</span></a>
+      <a href="#/settings" data-nav="settings">⚙️<span class="lbl"> Настройки</span></a>
     </nav>
   </div>
 </header>
 
 <main class="wrap"><div id="app"></div></main>
+
+<!-- AI-панель «Объясни ошибку» -->
+<div class="ai-backdrop" id="aiBackdrop"></div>
+<aside class="ai-panel" id="aiPanel" aria-label="AI-помощник" aria-hidden="true">
+  <div class="ai-head">
+    <div><b>🤖 Объясни ошибку</b><small id="aiSub"></small></div>
+    <div class="row" style="gap:6px"><span class="ai-mode" id="aiMode"></span><button class="icon-btn" id="aiClose" aria-label="Закрыть">✕</button></div>
+  </div>
+  <div class="ai-body" id="aiBody"></div>
+  <form class="ai-foot" id="aiForm" autocomplete="off">
+    <input type="text" id="aiInput" placeholder="Задай уточняющий вопрос…" maxlength="500">
+    <button class="btn btn-primary" type="submit" aria-label="Отправить">➤</button>
+  </form>
+</aside>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -376,26 +395,27 @@ const store = {
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
-/** Экранирование текста перед вставкой в HTML (защита от «поломки» вёрстки). */
+/** Экранирование текста перед вставкой в HTML. */
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const pctClass = p => (p >= 80 ? "good" : p >= 50 ? "mid" : "bad");
 const fmtDate = iso => new Date(iso).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+const plural = (n, one, few, many) => { const m10 = n % 10, m100 = n % 100; return m10 === 1 && m100 !== 11 ? one : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? few : many; };
 
 function toast(msg) {
   const t = $("#toast");
   t.textContent = msg;
   t.classList.add("show");
   clearTimeout(toast.timer);
-  toast.timer = setTimeout(() => t.classList.remove("show"), 2400);
+  toast.timer = setTimeout(() => t.classList.remove("show"), 2600);
 }
 
-/** Шапка модуля с кнопкой «Назад». */
+/** Шапка раздела с кнопкой «Назад». */
 function modHead(emoji, title, subtitle, backHref = "#/") {
   return `<div class="mod-head">
       <a class="back" href="${backHref}" aria-label="Назад">←</a>
-      <div><h1>${emoji} ${title}</h1><p>${subtitle}</p></div>
+      <div><h1>${emoji} ${title}</h1>${subtitle ? `<p>${subtitle}</p>` : ""}</div>
     </div>`;
 }
 
@@ -404,98 +424,733 @@ function emptyState(icon, title, hint) {
 }
 
 /* =====================================================================
-   2. ДАННЫЕ: ВОПРОСЫ WEAKPOINT
-   Формат: { t: тема, q: вопрос, o: [варианты], a: индекс верного, e: пояснение }
+   2. ПРЕДМЕТЫ И ЗАГРУЗКА ДАННЫХ
+   Классы — по типовым учебным программам РК (обновлённое содержание).
+   Сами темы и вопросы лежат в data/<id>.json (их дописывает команда).
    ===================================================================== */
-const SUBJECTS = {
-  math: {
-    name: "Математика", emoji: "📐",
-    questions: [
-      { t: "Дроби", q: "Сколько будет 3/4 + 1/8?", o: ["7/8", "4/12", "1/2", "5/8"], a: 0, e: "Приводим к знаменателю 8: 6/8 + 1/8 = 7/8." },
-      { t: "Дроби", q: "Чему равны 2/3 от 18?", o: ["12", "6", "9", "27"], a: 0, e: "18 : 3 × 2 = 12." },
-      { t: "Проценты", q: "Сколько составляет 15% от 200?", o: ["30", "15", "20", "45"], a: 0, e: "200 × 15 / 100 = 30." },
-      { t: "Проценты", q: "Цена 800 ₸ выросла на 25%. Какой стала цена?", o: ["1000 ₸", "825 ₸", "1025 ₸", "200 ₸"], a: 0, e: "25% от 800 = 200, значит 800 + 200 = 1000 ₸." },
-      { t: "Уравнения", q: "Реши уравнение: 3x − 7 = 11", o: ["x = 6", "x = 4", "x = 18", "x = 3"], a: 0, e: "3x = 11 + 7 = 18, x = 18 : 3 = 6." },
-      { t: "Уравнения", q: "Реши уравнение: 2(x + 3) = 14", o: ["x = 4", "x = 7", "x = 5,5", "x = 8"], a: 0, e: "x + 3 = 7, значит x = 4." },
-      { t: "Геометрия", q: "Площадь прямоугольника со сторонами 6 см и 4 см?", o: ["24 см²", "20 см²", "10 см²", "48 см²"], a: 0, e: "S = a × b = 6 × 4 = 24 см²." },
-      { t: "Геометрия", q: "Чему равна сумма углов любого треугольника?", o: ["180°", "90°", "360°", "270°"], a: 0, e: "Сумма внутренних углов треугольника всегда 180°." },
-      { t: "Степени", q: "Сколько будет 2⁵?", o: ["32", "10", "25", "16"], a: 0, e: "2 × 2 × 2 × 2 × 2 = 32." },
-      { t: "Степени", q: "Упрости: 10³ × 10²", o: ["10⁵", "10⁶", "100⁵", "20⁵"], a: 0, e: "При умножении степеней с одинаковым основанием показатели складываются: 3 + 2 = 5." }
-    ]
-  },
-  physics: {
-    name: "Физика", emoji: "⚡",
-    questions: [
-      { t: "Силы", q: "В каких единицах измеряется сила?", o: ["Ньютон (Н)", "Джоуль (Дж)", "Ватт (Вт)", "Паскаль (Па)"], a: 0, e: "Сила измеряется в ньютонах, в честь Исаака Ньютона." },
-      { t: "Силы", q: "Тело массой 2 кг движется с ускорением 3 м/с². Какая сила на него действует?", o: ["6 Н", "1,5 Н", "5 Н", "0,67 Н"], a: 0, e: "Второй закон Ньютона: F = m × a = 2 × 3 = 6 Н." },
-      { t: "Давление", q: "Сила 100 Н давит на площадь 2 м². Каково давление?", o: ["50 Па", "200 Па", "102 Па", "0,02 Па"], a: 0, e: "p = F / S = 100 / 2 = 50 Па." },
-      { t: "Давление", q: "Почему острый нож режет лучше тупого?", o: ["Меньше площадь — больше давление", "Острый нож тяжелее", "У острого ножа больше трение", "Острый нож сделан из другого металла"], a: 0, e: "При той же силе меньшая площадь лезвия создаёт большее давление (p = F/S)." },
-      { t: "Электричество", q: "Напряжение 12 В, сопротивление 4 Ом. Чему равна сила тока?", o: ["3 А", "48 А", "16 А", "8 А"], a: 0, e: "Закон Ома: I = U / R = 12 / 4 = 3 А." },
-      { t: "Электричество", q: "В каких единицах измеряется электрическое сопротивление?", o: ["Ом", "Ампер", "Вольт", "Ватт"], a: 0, e: "Сопротивление измеряют в омах (Ом), силу тока — в амперах, напряжение — в вольтах." },
-      { t: "Оптика", q: "Примерная скорость света в вакууме?", o: ["300 000 км/с", "340 м/с", "300 км/ч", "1 000 км/с"], a: 0, e: "Свет в вакууме проходит около 300 000 км в секунду. 340 м/с — это скорость звука в воздухе." },
-      { t: "Оптика", q: "Как связаны угол падения и угол отражения луча от зеркала?", o: ["Они равны", "Угол отражения вдвое больше", "Их сумма всегда 90°", "Они не связаны"], a: 0, e: "Закон отражения: угол падения равен углу отражения." },
-      { t: "Тепловые явления", q: "При какой температуре кипит чистая вода при нормальном атмосферном давлении?", o: ["100 °C", "90 °C", "0 °C", "120 °C"], a: 0, e: "При нормальном давлении вода кипит при 100 °C. В горах, где давление ниже, — при меньшей температуре." },
-      { t: "Тепловые явления", q: "Каким способом тепло от Солнца доходит до Земли через космос?", o: ["Излучением", "Теплопроводностью", "Конвекцией", "Никаким"], a: 0, e: "В вакууме нет вещества, поэтому тепло передаётся только излучением." }
-    ]
-  },
-  history: {
-    name: "История", emoji: "🏛️",
-    questions: [
-      { t: "Древний мир", q: "В какой древней цивилизации строили знаменитые пирамиды в Гизе?", o: ["Древний Египет", "Древний Рим", "Древняя Греция", "Древний Китай"], a: 0, e: "Пирамиды в Гизе построены в Древнем Египте как гробницы фараонов." },
-      { t: "Древний мир", q: "Где зародились первые Олимпийские игры?", o: ["В Древней Греции", "В Древнем Риме", "В Египте", "В Персии"], a: 0, e: "Олимпийские игры проводились в Олимпии, в Древней Греции." },
-      { t: "Средние века", q: "Какие регионы соединял Великий шёлковый путь?", o: ["Китай и Средиземноморье (Европу)", "Европу и Америку", "Африку и Австралию", "Индию и Америку"], a: 0, e: "Караванные дороги шли из Китая через Центральную Азию, в том числе юг Казахстана, к Ближнему Востоку и Средиземноморью." },
-      { t: "История Казахстана", q: "Кто считается основателями Казахского ханства?", o: ["Керей и Жанибек", "Абылай и Кенесары", "Абай и Шокан", "Тауке и Есим"], a: 0, e: "Казахское ханство основали султаны Керей и Жанибек в середине XV века." },
-      { t: "История Казахстана", q: "Когда Казахстан провозгласил государственную независимость?", o: ["16 декабря 1991 года", "25 октября 1990 года", "1 января 1993 года", "30 августа 1995 года"], a: 0, e: "16 декабря 1991 года — День Независимости Казахстана." },
-      { t: "История Казахстана", q: "В каком году введена национальная валюта Казахстана — тенге?", o: ["1993", "1991", "1996", "2000"], a: 0, e: "Тенге введён в ноябре 1993 года." },
-      { t: "Новое время", q: "В каком году экспедиция Христофора Колумба достигла Америки?", o: ["1492", "1066", "1789", "1610"], a: 0, e: "В 1492 году корабли Колумба достигли островов Карибского моря." },
-      { t: "Новое время", q: "В какой стране началась промышленная революция?", o: ["Великобритания", "Россия", "Япония", "Испания"], a: 0, e: "Промышленная революция началась в Великобритании во второй половине XVIII века." },
-      { t: "XX век", q: "В какие годы шла Вторая мировая война?", o: ["1939–1945", "1914–1918", "1941–1949", "1936–1942"], a: 0, e: "Вторая мировая война началась в 1939 и закончилась в 1945 году." },
-      { t: "XX век", q: "Откуда в 1961 году стартовал Юрий Гагарин — первый человек в космосе?", o: ["С космодрома Байконур", "С мыса Канаверал", "С космодрома Плесецк", "С Луны"], a: 0, e: "Гагарин полетел 12 апреля 1961 года с космодрома Байконур, который находится в Казахстане." }
-    ]
-  },
-  english: {
-    name: "Английский", emoji: "🇬🇧",
-    questions: [
-      { t: "Времена глаголов", q: "She ___ to school every day.", o: ["goes", "go", "going", "is go"], a: 0, e: "Present Simple: с he/she/it к глаголу добавляется -s/-es: she goes." },
-      { t: "Времена глаголов", q: "Yesterday I ___ a great film.", o: ["watched", "watch", "am watching", "have watch"], a: 0, e: "Yesterday указывает на прошлое — Past Simple: watched." },
-      { t: "Времена глаголов", q: "Look! They ___ football right now.", o: ["are playing", "play", "played", "plays"], a: 0, e: "Right now — действие происходит сейчас, нужен Present Continuous: are playing." },
-      { t: "Неправильные глаголы", q: "Какая форма Past Simple у глагола «go»?", o: ["went", "goed", "gone", "going"], a: 0, e: "go — went — gone. «Went» — прошедшее время." },
-      { t: "Неправильные глаголы", q: "Какая третья форма (Past Participle) у глагола «write»?", o: ["written", "wrote", "writed", "writing"], a: 0, e: "write — wrote — written." },
-      { t: "Артикли и предлоги", q: "I eat ___ apple every morning.", o: ["an", "a", "the", "—"], a: 0, e: "Перед словом, которое начинается с гласного звука, ставим «an»: an apple." },
-      { t: "Артикли и предлоги", q: "My birthday is ___ Monday.", o: ["on", "in", "at", "to"], a: 0, e: "С днями недели используется предлог «on»: on Monday." },
-      { t: "Лексика", q: "Как переводится слово «library»?", o: ["Библиотека", "Лаборатория", "Книжный магазин", "Свобода"], a: 0, e: "Library — библиотека. Книжный магазин — bookshop." },
-      { t: "Лексика", q: "Подбери антоним к слову «expensive».", o: ["cheap", "rich", "big", "costly"], a: 0, e: "Expensive — дорогой, cheap — дешёвый. Costly — синоним." },
-      { t: "Условные предложения", q: "If it rains tomorrow, we ___ at home.", o: ["will stay", "stay", "stayed", "would stayed"], a: 0, e: "Первый тип условных: If + Present Simple, will + глагол." }
-    ]
+const SUBJECTS = [
+  { id: "math",        name: "Математика",       emoji: "🔢", color: "#22A06B", grades: [5, 6] },
+  { id: "algebra",     name: "Алгебра",          emoji: "📈", color: "#2f80ed", grades: [7, 8, 9, 10, 11] },
+  { id: "geometry",    name: "Геометрия",        emoji: "📐", color: "#9b51e0", grades: [7, 8, 9, 10, 11] },
+  { id: "physics",     name: "Физика",           emoji: "⚡", color: "#f2994a", grades: [7, 8, 9, 10, 11] },
+  { id: "chemistry",   name: "Химия",            emoji: "🧪", color: "#eb5757", grades: [7, 8, 9, 10, 11] },
+  { id: "biology",     name: "Биология",         emoji: "🧬", color: "#27ae60", grades: [7, 8, 9, 10, 11] },
+  { id: "geography",   name: "География",        emoji: "🌍", color: "#00a3a3", grades: [7, 8, 9, 10, 11] },
+  { id: "informatics", name: "Информатика",      emoji: "💻", color: "#3d5afe", grades: [5, 6, 7, 8, 9, 10, 11] },
+  { id: "english",     name: "Английский язык",  emoji: "🇬🇧", color: "#d6336c", grades: [5, 6, 7, 8, 9, 10, 11] },
+  { id: "history_kz",  name: "История Казахстана", emoji: "🏛️", color: "#b7791f", grades: [5, 6, 7, 8, 9, 10, 11] }
+];
+const subjectById = id => SUBJECTS.find(s => s.id === id);
+
+const LEVELS = [
+  { id: "easy",     name: "Лёгкий",      color: "#22A06B", hint: "Определения и базовые факты" },
+  { id: "medium",   name: "Средний",     color: "#2f80ed", hint: "Применение в типовых задачах" },
+  { id: "hard",     name: "Сложный",     color: "#f2994a", hint: "Задачи в несколько шагов" },
+  { id: "olympiad", name: "Олимпиадный", color: "#d6336c", hint: "Нестандартные задачи" }
+];
+const levelById = id => LEVELS.find(l => l.id === id);
+const PASS = 70; // тест считается сданным от 70%
+
+/** Подключает <script> (работает и при открытии файла напрямую, file://). */
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = src; s.onload = resolve; s.onerror = () => reject(new Error("Не удалось загрузить " + src));
+    document.head.appendChild(s);
+  });
+}
+
+/** Загружает JSON; при file:// — его копию data/js/<name>.js. */
+async function loadJson(name) {
+  window.NOVA_DATA = window.NOVA_DATA || {};
+  if (location.protocol !== "file:") {
+    try { const r = await fetch(`data/${name}.json`, { cache: "no-cache" }); if (r.ok) return await r.json(); } catch (e) { /* пробуем копию */ }
   }
+  if (!window.NOVA_DATA[name]) await loadScript(`data/js/${name}.js`);
+  return window.NOVA_DATA[name];
+}
+
+let INDEX = {};      // data/index.json: какие предметы готовы и сколько тем в каждом классе
+const DATA = {};     // загруженные предметы
+
+async function getSubject(id) {
+  if (!DATA[id]) DATA[id] = await loadJson(id);
+  return DATA[id];
+}
+const isReady = id => !!INDEX[id];
+const topicCount = (sid, grade) => INDEX[sid]?.grades?.[grade] || 0;
+const subjectTopicCount = sid => Object.values(INDEX[sid]?.grades || {}).reduce((a, b) => a + b, 0);
+
+function findTopic(data, grade, tid) {
+  for (const sec of data.classes[grade]?.sections || []) {
+    const t = sec.topics.find(x => x.id === tid);
+    if (t) return { topic: t, section: sec };
+  }
+  return null;
+}
+
+/* =====================================================================
+   3. ПРОГРЕСС
+   progress["physics|7|p7-density"] = { title, levels: { easy: { best, right, total, attempts } }, done, last }
+   Тема пройдена (галочка), если хотя бы один уровень сдан на 70% и выше.
+   ===================================================================== */
+const pKey = (sid, grade, tid) => `${sid}|${grade}|${tid}`;
+const getProgress = () => store.get("progress", {});
+const topicProgress = (sid, grade, tid) => getProgress()[pKey(sid, grade, tid)];
+const doneCount = (sid, grade) => Object.entries(getProgress())
+  .filter(([k, v]) => v.done && k.startsWith(grade ? `${sid}|${grade}|` : `${sid}|`)).length;
+const gradePercent = (sid, grade) => { const n = topicCount(sid, grade); return n ? Math.round(doneCount(sid, grade) / n * 100) : 0; };
+const subjectPercent = sid => { const n = subjectTopicCount(sid); return n ? Math.round(doneCount(sid) / n * 100) : 0; };
+
+function saveResult(sid, grade, topic, level, score, total) {
+  const all = getProgress();
+  const key = pKey(sid, grade, topic.id);
+  const p = all[key] || { title: topic.title, levels: {} };
+  const l = p.levels[level] || { best: 0, right: 0, total: 0, attempts: 0 };
+  const percent = Math.round(score / total * 100);
+  l.best = Math.max(l.best, percent); l.right += score; l.total += total; l.attempts++;
+  p.levels[level] = l;
+  p.title = topic.title;
+  p.done = Object.values(p.levels).some(x => x.best >= PASS);
+  p.last = new Date().toISOString();
+  all[key] = p;
+  store.set("progress", all);
+  const hist = store.get("history", []);
+  hist.unshift({ sid, grade, tid: topic.id, title: topic.title, level, score, total, percent, date: p.last });
+  store.set("history", hist.slice(0, 200));
+  return percent;
+}
+
+/* =====================================================================
+   4. РОУТЕР (навигация без перезагрузки)
+   #/                          — предметы
+   #/s/<предмет>               — классы
+   #/s/<предмет>/<класс>       — темы класса
+   #/t/<предмет>/<класс>/<тема> — объяснение и выбор сложности
+   #/q/<предмет>/<класс>/<тема>/<уровень> — тест
+   #/weak, #/settings, #/hometry, #/tasks, #/team
+   ===================================================================== */
+const routes = {
+  "": renderHome,
+  s: renderSubjectOrGrade,
+  t: renderTopic,
+  q: renderQuiz,
+  weak: renderWeakPoint,
+  settings: renderSettings,
+  hometry: renderHomeTry,
+  tasks: renderTasks,
+  team: renderTeam
 };
 
-/** Что повторить, если тема проседает. */
-const TOPIC_TIPS = {
-  "Дроби": "Повтори приведение к общему знаменателю и нахождение части от числа.",
-  "Проценты": "Запомни: p% от числа = число × p / 100. Потренируйся на скидках и ценах.",
-  "Уравнения": "Переноси числа через знак «=» с противоположным знаком и проверяй ответ подстановкой.",
-  "Геометрия": "Выучи формулы площадей и свойства углов треугольника.",
-  "Степени": "Повтори свойства степеней: aᵐ × aⁿ = aᵐ⁺ⁿ.",
-  "Силы": "Повтори законы Ньютона и единицы измерения (Н, кг, м/с²).",
-  "Давление": "Разбери формулу p = F/S на примерах: нож, кнопка, лыжи.",
-  "Электричество": "Повтори закон Ома I = U/R и единицы: А, В, Ом.",
-  "Оптика": "Повтори законы отражения и преломления света.",
-  "Тепловые явления": "Разбери три способа теплопередачи: теплопроводность, конвекция, излучение.",
-  "Древний мир": "Составь ленту времени древних цивилизаций: Египет, Греция, Рим.",
-  "Средние века": "Повтори торговые пути и города Средней Азии.",
-  "История Казахстана": "Повтори ключевые события: Казахское ханство, независимость, введение тенге.",
-  "Новое время": "Повтори Великие географические открытия и промышленную революцию.",
-  "XX век": "Составь хронологию главных событий XX века.",
-  "Времена глаголов": "Повтори маркеры времён: every day, yesterday, now.",
-  "Неправильные глаголы": "Учи по 10 неправильных глаголов в день (три формы).",
-  "Артикли и предлоги": "Повтори a/an/the и предлоги времени: in, on, at.",
-  "Лексика": "Заведи карточки со словами и повторяй их каждый день.",
-  "Условные предложения": "Повтори схему: If + Present Simple, will + глагол."
+async function router() {
+  const parts = location.hash.replace(/^#\/?/, "").split("/").map(decodeURIComponent);
+  const name = routes[parts[0]] ? parts[0] : "";
+  if (name !== "q" && quiz) quiz = null; // ушли со страницы теста — тест сбрасывается
+  $$(".top-nav a").forEach(a => a.classList.toggle("active", a.dataset.nav === (["s", "t", "q"].includes(name) ? "" : name)));
+  const app = $("#app");
+  app.innerHTML = `<div class="view"></div>`;
+  window.scrollTo({ top: 0 });
+  try {
+    await routes[name](app.firstElementChild, ...parts.slice(1));
+  } catch (e) {
+    console.warn(e);
+    app.firstElementChild.innerHTML = modHead("😕", "Не получилось открыть раздел", esc(e.message)) +
+      emptyState("📂", "Данные не загрузились", "Проверь, что папка data/ лежит рядом с index.html, и обнови страницу.");
+  }
+}
+window.addEventListener("hashchange", router);
+
+/* =====================================================================
+   5. ГЛАВНАЯ: предметы, статистика, инструменты
+   ===================================================================== */
+function renderHome(view) {
+  const hist = store.get("history", []);
+  const avg = hist.length ? Math.round(hist.reduce((s, h) => s + h.percent, 0) / hist.length) : null;
+  const done = Object.values(getProgress()).filter(p => p.done).length;
+  const active = store.get("tasks", []).filter(t => !t.done).length;
+  const team = store.get("team", []).length;
+
+  view.innerHTML = `
+    <section class="hero">
+      <p class="eyebrow">✦ ШКОЛЬНАЯ ПРОГРАММА КАЗАХСТАНА · 5–11 КЛАСС</p>
+      <h1>Учись проще.<br><em>Развивайся быстрее.</em></h1>
+      <p>Выбери предмет и класс — все темы по программе, короткие объяснения и тесты четырёх уровней: от лёгкого до олимпиадного.</p>
+    </section>
+
+    <section class="stats" aria-label="Статистика">
+      <div class="stat"><b>${avg === null ? "—" : avg + "%"}</b><span>средний результат тестов</span></div>
+      <div class="stat"><b>${done}</b><span>${plural(done, "тема пройдена", "темы пройдены", "тем пройдено")}</span></div>
+      <div class="stat"><b>${active}</b><span>активных задач</span></div>
+      <div class="stat"><b>${team}</b><span>в моей команде</span></div>
+    </section>
+
+    <div class="section-title"><h2>📚 Предметы</h2><span class="small muted">по классам 5–11</span></div>
+    <section class="subjects">
+      ${SUBJECTS.map(s => {
+        const ready = isReady(s.id);
+        const p = subjectPercent(s.id);
+        return `<a class="subject" href="#/s/${s.id}" style="--c:${s.color}">
+          ${ready ? "" : `<span class="soon">скоро</span>`}
+          <span class="s-icon">${s.emoji}</span>
+          <b>${s.name}</b>
+          <small>${s.grades[0]}–${s.grades[s.grades.length - 1]} класс${ready ? ` · ${p}% пройдено` : ""}</small>
+          ${ready ? `<div class="progress"><i style="width:${p}%"></i></div>` : ""}
+        </a>`;
+      }).join("")}
+    </section>
+
+    <div class="section-title"><h2>🧰 Инструменты</h2></div>
+    <section class="tools">
+      <a class="tool" href="#/weak"><span>🧠</span><div><b>WeakPoint</b><small>Слабые темы</small></div></a>
+      <a class="tool" href="#/hometry"><span>🔍</span><div><b>HomeTry</b><small>Опыты дома</small></div></a>
+      <a class="tool" href="#/tasks"><span>📅</span><div><b>TaskPlanner</b><small>Дедлайны</small></div></a>
+      <a class="tool" href="#/team"><span>🤝</span><div><b>TeamSync</b><small>Поиск команды</small></div></a>
+    </section>`;
+}
+
+/* =====================================================================
+   6. ПРЕДМЕТ → КЛАСС → ТЕМА
+   ===================================================================== */
+async function renderSubjectOrGrade(view, sid, grade) {
+  const s = subjectById(sid);
+  if (!s) { location.hash = "#/"; return; }
+  if (grade) return renderGrade(view, s, +grade);
+
+  if (!isReady(sid)) {
+    view.innerHTML = modHead(s.emoji, s.name, `${s.grades[0]}–${s.grades[s.grades.length - 1]} класс`) +
+      emptyState("🛠️", "Раздел в разработке", "Темы и тесты по этому предмету скоро появятся. Пока загляни в другие предметы.");
+    return;
+  }
+  const p = subjectPercent(sid);
+  view.innerHTML = `
+    ${modHead(s.emoji, s.name, "Выбери класс")}
+    <section class="card">
+      <div class="row between small"><b>Пройдено по предмету</b><span>${doneCount(sid)} из ${subjectTopicCount(sid)} тем</span></div>
+      <div class="big-progress" style="margin-top:8px"><div class="progress"><i style="width:${p}%"></i></div><b class="pct ${pctClass(p)}">${p}%</b></div>
+    </section>
+    <section class="grades">
+      ${s.grades.map(g => {
+        const n = topicCount(sid, g);
+        const gp = gradePercent(sid, g);
+        return `<a class="grade" href="#/s/${sid}/${g}">
+          <span class="g-num">${g}</span><b>${g} класс</b>
+          <small>${n ? `${n} ${plural(n, "тема", "темы", "тем")} · ${gp}%` : "темы скоро появятся"}</small>
+          <div class="progress"><i style="width:${gp}%"></i></div>
+        </a>`;
+      }).join("")}
+    </section>
+    <p class="small muted" style="margin-top:14px">Классы и темы — по типовой учебной программе РК (обновлённое содержание образования).</p>`;
+}
+
+async function renderGrade(view, s, grade) {
+  const data = await getSubject(s.id);
+  const cls = data.classes[grade];
+  if (!cls) {
+    view.innerHTML = modHead(s.emoji, `${s.name} · ${grade} класс`, "", `#/s/${s.id}`) +
+      emptyState("🛠️", "Темы этого класса скоро появятся", "Выбери другой класс.");
+    return;
+  }
+  const prog = getProgress();
+  const gp = gradePercent(s.id, grade);
+  view.innerHTML = `
+    <nav class="crumbs"><a href="#/s/${s.id}">${s.name}</a> › <span>${grade} класс</span></nav>
+    ${modHead(s.emoji, `${s.name} · ${grade} класс`, cls.book ? esc(cls.book) : "Все темы по программе", `#/s/${s.id}`)}
+    <section class="card">
+      <div class="row between small"><b>Пройдено в ${grade} классе</b><span>${doneCount(s.id, grade)} из ${topicCount(s.id, grade)}</span></div>
+      <div class="big-progress" style="margin-top:8px"><div class="progress"><i style="width:${gp}%"></i></div><b class="pct ${pctClass(gp)}">${gp}%</b></div>
+    </section>
+    ${cls.sections.map(sec => `
+      <section class="section">
+        <h3>${esc(sec.title)}</h3>
+        <div class="topics">
+          ${sec.topics.map(t => {
+            const p = prog[pKey(s.id, grade, t.id)];
+            const best = p ? Math.max(...Object.values(p.levels).map(l => l.best)) : null;
+            return `<a class="topic-row ${p?.done ? "done" : ""}" href="#/t/${s.id}/${grade}/${t.id}">
+              <span class="tick">${p?.done ? "✓" : ""}</span>
+              <span class="t-name">${esc(t.title)}</span>
+              <span class="t-side">${t.check ? `<span class="badge-check" title="Проверить по учебнику">проверить</span>` : ""}${best !== null ? `<span class="pct ${pctClass(best)}">${best}%</span>` : ""}›</span>
+            </a>`;
+          }).join("")}
+        </div>
+      </section>`).join("")}`;
+}
+
+async function renderTopic(view, sid, grade, tid) {
+  const s = subjectById(sid);
+  const data = await getSubject(sid);
+  const found = findTopic(data, grade, tid);
+  if (!s || !found) { location.hash = `#/s/${sid}/${grade}`; return; }
+  const { topic, section } = found;
+  const p = topicProgress(sid, grade, tid);
+  view.innerHTML = `
+    <nav class="crumbs"><a href="#/s/${sid}">${s.name}</a> › <a href="#/s/${sid}/${grade}">${grade} класс</a> › <span>${esc(topic.title)}</span></nav>
+    ${modHead(s.emoji, esc(topic.title), esc(section.title), `#/s/${sid}/${grade}`)}
+    ${topic.check ? `<p class="badge-check" style="display:inline-block;margin-bottom:12px">⚠️ Тему нужно сверить с учебником</p>` : ""}
+    <section class="card explain-card">
+      <h3>💡 Коротко о теме</h3>
+      ${topic.explain.split("\n").map(x => `<p>${esc(x)}</p>`).join("")}
+      ${topic.formula ? `<p><b>Главное:</b> ${esc(topic.formula)}</p>` : ""}
+    </section>
+    <div class="section-title"><h2>Выбери сложность</h2>${p?.done ? `<span class="chip on">✓ тема пройдена</span>` : `<span class="small muted">сдано от ${PASS}%</span>`}</div>
+    <section class="levels">
+      ${LEVELS.map((l, i) => {
+        const qs = topic.levels[l.id] || [];
+        const lp = p?.levels[l.id];
+        return `<button class="level ${lp?.best >= PASS ? "passed" : ""}" style="--lc:${l.color}" data-level="${l.id}" ${qs.length ? "" : "disabled"}>
+          <span class="l-dot">${i + 1}</span>
+          <b>${l.name}</b>
+          <small>${l.hint}</small>
+          <small>${qs.length} ${plural(qs.length, "вопрос", "вопроса", "вопросов")}${lp ? ` · лучший: <span class="pct ${pctClass(lp.best)}">${lp.best}%</span>` : ""}</small>
+        </button>`;
+      }).join("")}
+    </section>`;
+  $$("[data-level]", view).forEach(b => b.onclick = () => { location.hash = `#/q/${sid}/${grade}/${tid}/${b.dataset.level}`; });
+}
+
+/* =====================================================================
+   7. ТЕСТ
+   Вопрос в данных: { q, o: [варианты, первый — верный], a: 0, e: пояснение }
+   ===================================================================== */
+let quiz = null;
+
+async function renderQuiz(view, sid, grade, tid, level) {
+  const s = subjectById(sid);
+  const data = await getSubject(sid);
+  const found = findTopic(data, grade, tid);
+  const lv = levelById(level);
+  if (!s || !found || !lv || !(found.topic.levels[level] || []).length) { location.hash = `#/t/${sid}/${grade}/${tid}`; return; }
+  const key = [sid, grade, tid, level].join("|");
+  if (!quiz || quiz.key !== key) {
+    const questions = shuffle(found.topic.levels[level]).map(q => {
+      const order = shuffle(q.o.map((_, i) => i));
+      return { ...q, o: order.map(i => q.o[i]), a: order.indexOf(q.a ?? 0) };
+    });
+    quiz = { key, sid, grade: +grade, tid, level, topic: found.topic, questions, answers: Array(questions.length).fill(null), i: 0 };
+  }
+  quiz.finished ? drawResult(view) : drawQuestion(view);
+}
+
+function drawQuestion(view) {
+  const s = subjectById(quiz.sid);
+  const lv = levelById(quiz.level);
+  const q = quiz.questions[quiz.i];
+  const total = quiz.questions.length;
+  view.innerHTML = `
+    <nav class="crumbs"><a href="#/s/${quiz.sid}">${s.name}</a> › <a href="#/s/${quiz.sid}/${quiz.grade}">${quiz.grade} класс</a> › <a href="#/t/${quiz.sid}/${quiz.grade}/${quiz.tid}">${esc(quiz.topic.title)}</a></nav>
+    ${modHead(s.emoji, esc(quiz.topic.title), `Уровень: ${lv.name}`, `#/t/${quiz.sid}/${quiz.grade}/${quiz.tid}`)}
+    <section class="card question">
+      <div class="q-top"><span>Вопрос ${quiz.i + 1} из ${total}</span><span>${quiz.answers.filter(a => a !== null).length} отвечено</span></div>
+      <div class="progress"><i style="width:${(quiz.i / total) * 100}%"></i></div>
+      <h2>${esc(q.q)}</h2>
+      <div class="options">
+        ${q.o.map((opt, k) => `<button class="option ${quiz.answers[quiz.i] === k ? "picked" : ""}" data-k="${k}">${esc(opt)}</button>`).join("")}
+      </div>
+      <div class="row between" style="margin-top:16px">
+        <button class="btn btn-ghost" id="prevQ" ${quiz.i === 0 ? "disabled" : ""}>← Назад</button>
+        <button class="btn btn-primary" id="nextQ" ${quiz.answers[quiz.i] === null ? "disabled" : ""}>${quiz.i === total - 1 ? "Завершить тест" : "Далее →"}</button>
+      </div>
+    </section>`;
+  $$(".option", view).forEach(b => b.onclick = () => { quiz.answers[quiz.i] = +b.dataset.k; drawQuestion(view); });
+  $("#prevQ", view).onclick = () => { quiz.i--; drawQuestion(view); };
+  $("#nextQ", view).onclick = () => {
+    if (quiz.i < total - 1) { quiz.i++; drawQuestion(view); return; }
+    const score = quiz.questions.filter((q, i) => quiz.answers[i] === q.a).length;
+    quiz.score = score;
+    quiz.percent = saveResult(quiz.sid, quiz.grade, quiz.topic, quiz.level, score, total);
+    quiz.finished = true;
+    drawResult(view);
+    window.scrollTo({ top: 0 });
+  };
+}
+
+function drawResult(view) {
+  const s = subjectById(quiz.sid);
+  const lv = levelById(quiz.level);
+  const total = quiz.questions.length;
+  const pct = quiz.percent;
+  const color = pct >= 80 ? "var(--ok)" : pct >= 50 ? "var(--warn)" : "var(--danger)";
+  const msg = pct >= 80 ? "Отличный результат! 🔥" : pct >= PASS ? "Тест сдан! Можно попробовать уровень сложнее 💪" : pct >= 50 ? "Почти! Разберём ошибки и попробуем снова 💪" : "Не страшно — разберём ошибки вместе 🌱";
+  const mistakes = quiz.questions.map((q, i) => ({ q, i, picked: quiz.answers[i] })).filter(x => x.picked !== x.q.a);
+  const nextLevel = LEVELS[LEVELS.findIndex(l => l.id === quiz.level) + 1];
+
+  view.innerHTML = `
+    <nav class="crumbs"><a href="#/s/${quiz.sid}">${s.name}</a> › <a href="#/s/${quiz.sid}/${quiz.grade}">${quiz.grade} класс</a> › <a href="#/t/${quiz.sid}/${quiz.grade}/${quiz.tid}">${esc(quiz.topic.title)}</a></nav>
+    ${modHead(s.emoji, "Результат", `${esc(quiz.topic.title)} · ${lv.name}`, `#/t/${quiz.sid}/${quiz.grade}/${quiz.tid}`)}
+    <section class="card result-top">
+      <div class="ring" style="--p:${pct}; --ring-c:${color}"><div>${pct}%</div></div>
+      <div>
+        <h2 style="margin-bottom:4px">${quiz.score} из ${total} правильно</h2>
+        <p class="muted">${msg}</p>
+        <div class="row">
+          <button class="btn btn-primary" id="retry">↻ Ещё раз</button>
+          ${nextLevel && pct >= PASS ? `<a class="btn btn-soft" href="#/q/${quiz.sid}/${quiz.grade}/${quiz.tid}/${nextLevel.id}">Уровень «${nextLevel.name}» →</a>` : ""}
+          <a class="btn" href="#/s/${quiz.sid}/${quiz.grade}">К темам класса</a>
+        </div>
+      </div>
+    </section>
+    <section class="card">
+      <h3>${mistakes.length ? `❌ Ошибки (${mistakes.length})` : "🏆 Без ошибок!"}</h3>
+      ${mistakes.length ? mistakes.map(m => `
+        <div class="mistake">
+          <p><b>${esc(m.q.q)}</b></p>
+          <p class="bad">Твой ответ: ${esc(m.q.o[m.picked])}</p>
+          <p class="good">Правильно: ${esc(m.q.o[m.q.a])}</p>
+          <button class="btn btn-sm btn-soft explain-btn" data-explain="${m.i}">🤖 Объясни</button>
+        </div>`).join("")
+      : `<p class="muted">Все ответы верные. Попробуй уровень сложнее!</p>`}
+    </section>`;
+
+  $("#retry", view).onclick = () => { quiz = null; router(); };
+  $$("[data-explain]", view).forEach(b => b.onclick = () => {
+    const i = +b.dataset.explain;
+    const q = quiz.questions[i];
+    openAi({
+      subject: s.name, grade: quiz.grade, level: lv.name, topic: quiz.topic.title, topicExplain: quiz.topic.explain,
+      q: q.q, options: q.o, picked: q.o[quiz.answers[i]], correct: q.o[q.a], e: q.e
+    });
+  });
+}
+
+/* =====================================================================
+   8. WEAKPOINT — слабые темы по результатам тестов
+   ===================================================================== */
+let weakFilter = "";
+
+function renderWeakPoint(view) {
+  const prog = getProgress();
+  const hist = store.get("history", []);
+  const rows = Object.entries(prog).map(([key, p]) => {
+    const [sid, grade, tid] = key.split("|");
+    const right = Object.values(p.levels).reduce((a, l) => a + l.right, 0);
+    const total = Object.values(p.levels).reduce((a, l) => a + l.total, 0);
+    return { sid, grade, tid, title: p.title, acc: total ? Math.round(right / total * 100) : 0, total, done: p.done };
+  });
+  const weak = rows.filter(r => r.acc < PASS && (!weakFilter || r.sid === weakFilter)).sort((a, b) => a.acc - b.acc);
+  const strong = rows.filter(r => r.acc >= 85 && (!weakFilter || r.sid === weakFilter)).sort((a, b) => b.acc - a.acc).slice(0, 5);
+  const usedSubjects = SUBJECTS.filter(s => rows.some(r => r.sid === s.id));
+  const avg = hist.length ? Math.round(hist.reduce((s, h) => s + h.percent, 0) / hist.length) : null;
+
+  view.innerHTML = `
+    ${modHead("🧠", "WeakPoint", "Темы, которые проседают по результатам твоих тестов")}
+    ${!rows.length ? emptyState("🎯", "Пока нечего анализировать", `Пройди хотя бы один тест по любой теме — здесь появятся слабые места.<br><br><a class="btn btn-primary" href="#/">Выбрать предмет</a>`) : `
+    <section class="stats" style="margin-top:0">
+      <div class="stat"><b>${avg}%</b><span>средний результат</span></div>
+      <div class="stat"><b>${hist.length}</b><span>${plural(hist.length, "тест пройден", "теста пройдено", "тестов пройдено")}</span></div>
+      <div class="stat"><b>${rows.filter(r => r.done).length}</b><span>тем сдано</span></div>
+      <div class="stat"><b>${rows.filter(r => r.acc < PASS).length}</b><span>слабых тем</span></div>
+    </section>
+    ${usedSubjects.length > 1 ? `<div class="chips" style="margin-bottom:14px">
+      <button class="chip ${!weakFilter ? "active" : ""}" data-f="">Все предметы</button>
+      ${usedSubjects.map(s => `<button class="chip ${weakFilter === s.id ? "active" : ""}" data-f="${s.id}">${s.emoji} ${s.name}</button>`).join("")}
+    </div>` : ""}
+    <div class="two-col">
+      <section class="card">
+        <h3>📉 Что повторить</h3>
+        ${weak.length ? weak.map(r => {
+          const s = subjectById(r.sid);
+          return `<a class="weak" href="#/t/${r.sid}/${r.grade}/${r.tid}">
+            <div><b>${esc(r.title)}</b><small>${s.emoji} ${s.name} · ${r.grade} класс · ответов: ${r.total}</small></div>
+            <span class="pct ${pctClass(r.acc)}">${r.acc}%</span></a>`;
+        }).join("") : `<p class="muted">Слабых тем нет — все пройденные темы выше ${PASS}%. Так держать! 🎉</p>`}
+        <p class="small muted">Процент — доля верных ответов по теме за все попытки и уровни. Нажми на тему, чтобы повторить объяснение и пройти тест снова.</p>
+      </section>
+      <section class="card">
+        <h3>💪 Сильные темы</h3>
+        ${strong.length ? strong.map(r => `<div class="hist-item"><span>${subjectById(r.sid).emoji} ${esc(r.title)}</span><span class="pct good">${r.acc}%</span></div>`).join("") : `<p class="muted">Здесь появятся темы, где ты отвечаешь верно на 85% и больше.</p>`}
+        <h3 style="margin-top:18px">🕑 Последние тесты</h3>
+        ${hist.slice(0, 8).map(h => `<div class="hist-item"><div><b>${esc(h.title)}</b><br><span class="small muted">${subjectById(h.sid)?.emoji || ""} ${h.grade} кл · ${levelById(h.level)?.name} · ${fmtDate(h.date)}</span></div><span class="pct ${pctClass(h.percent)}">${h.percent}%</span></div>`).join("")}
+      </section>
+    </div>`}`;
+  $$("[data-f]", view).forEach(b => b.onclick = () => { weakFilter = b.dataset.f; renderWeakPoint(view); });
+}
+
+/* =====================================================================
+   9. AI-ПОМОЩНИК «ОБЪЯСНИ ОШИБКУ»
+   Без ключа: пояснение из данных вопроса + статьи Википедии (API, origin=*).
+   С ключом: Claude API прямо из браузера + инструмент веб-поиска.
+   ===================================================================== */
+const AI_MODELS = {
+  "claude-opus-5-5": "Claude Opus 5.5 (лучшее качество)",
+  "claude-sonnet-5-5": "Claude Sonnet 5.5 (быстрее и дешевле)",
+  "claude-haiku-5-5": "Claude Haiku 5.5 (самый дешёвый)"
+};
+const AI_DEFAULT_MODEL = "claude-opus-5-5";
+
+const AI_SYSTEM_PROMPT = `Ты — доброжелательный репетитор образовательной платформы NOVA для школьников Казахстана (5–11 класс, обновлённое содержание образования).
+Ученик ошибся в тесте и просит объяснить ошибку. В первом сообщении ты получишь контекст: предмет, класс, тему, уровень сложности, вопрос, варианты, ответ ученика, правильный ответ и пояснение из учебных материалов.
+
+КАК ОБЪЯСНЯТЬ:
+- Пиши для возраста ученика: возраст ≈ класс + 6 лет. Для 5–7 класса — очень простые слова и бытовые примеры, для 10–11 — можно точнее и с терминами (каждый новый термин объясняй).
+- Учитывай уровень сложности: на лёгком — напомни определение или правило; на сложном и олимпиадном — разбери идею решения по шагам.
+- Сначала коротко объясни, почему выбранный ответ неверный (какое рассуждение к нему приводит и где ловушка), затем — как рассуждать правильно.
+- Подводи к ответу наводящими вопросами и подсказками. Если ученик просит решить новую задачу целиком — не решай полностью: дай план и первый шаг, предложи ему продолжить.
+- Отвечай кратко: 4–10 предложений. Можно использовать **жирный** и короткие списки. Без таблиц и LaTeX: формулы пиши обычным текстом (например, F = m · a, x² + 3x).
+
+ЧЕСТНОСТЬ:
+- Не выдумывай факты, даты, формулы и цитаты. Если не уверен — так и скажи.
+- Если пояснение из учебных материалов кажется тебе ошибочным, вежливо скажи об этом и посоветуй сверить с учебником или учителем.
+- ВСЕГДА давай 2–3 источника по теме: используй веб-поиск и выбирай надёжные сайты (энциклопедии, Википедия, образовательные порталы, учебники). Источники должны реально подтверждать объяснение.
+
+Пиши по-русски. Отвечай только на вопросы, связанные с учёбой; на остальное мягко возвращай к теме. Никогда не проси личные данные.`;
+
+const ai = { ctx: null, messages: [], busy: false };
+const settings = () => Object.assign({ apiKey: "", model: AI_DEFAULT_MODEL }, store.get("settings", {}));
+const hasKey = () => !!settings().apiKey;
+
+/** Простая разметка: **жирный**, списки, ссылки, переносы строк. */
+function md(text) {
+  const lines = esc(text).split("\n");
+  let html = "", inList = false;
+  for (const line of lines) {
+    const li = line.match(/^\s*(?:[-*•]|\d+[.)])\s+(.*)/);
+    if (li) { if (!inList) { html += "<ul>"; inList = true; } html += `<li>${li[1]}</li>`; continue; }
+    if (inList) { html += "</ul>"; inList = false; }
+    html += line.trim() ? line + "<br>" : "<br>";
+  }
+  if (inList) html += "</ul>";
+  return html
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    .replace(/(<br>){3,}/g, "<br><br>");
+}
+
+function sourcesHtml(list, title = "📚 Статьи по теме") {
+  if (!list?.length) return "";
+  return `<div class="sources"><b>${title}:</b>${list.map(s => `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)} ↗</a>`).join("")}</div>`;
+}
+
+function aiAdd(who, html) {
+  const body = $("#aiBody");
+  const div = document.createElement("div");
+  div.className = "msg " + who;
+  div.innerHTML = html;
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+  return div;
+}
+function aiTyping() { return aiAdd("bot typing", "<span></span><span></span><span></span>"); }
+
+function openAi(ctx) {
+  ai.ctx = ctx; ai.messages = [];
+  $("#aiSub").textContent = `${ctx.subject} · ${ctx.grade} класс · ${ctx.level}`;
+  const mode = $("#aiMode");
+  mode.textContent = hasKey() ? "Claude" : "без ключа";
+  mode.classList.toggle("on", hasKey());
+  $("#aiBody").innerHTML = `
+    <div class="ai-ctx">
+      <p><b>${esc(ctx.q)}</b></p>
+      <p style="color:var(--danger)">Твой ответ: ${esc(ctx.picked)}</p>
+      <p style="color:var(--ok)">Правильно: ${esc(ctx.correct)}</p>
+    </div>`;
+  $("#aiPanel").classList.add("open");
+  $("#aiPanel").setAttribute("aria-hidden", "false");
+  $("#aiBackdrop").classList.add("open");
+  firstExplanation();
+}
+
+function closeAi() {
+  $("#aiPanel").classList.remove("open");
+  $("#aiPanel").setAttribute("aria-hidden", "true");
+  $("#aiBackdrop").classList.remove("open");
+}
+
+/** Первое объяснение: Claude, а при ошибке или без ключа — локальное. */
+async function firstExplanation() {
+  if (hasKey()) {
+    const c = ai.ctx;
+    const intro = `Контекст ошибки:
+Предмет: ${c.subject}. Класс: ${c.grade}. Тема: ${c.topic}. Уровень сложности: ${c.level}.
+Вопрос: ${c.q}
+Варианты: ${c.options.join(" | ")}
+Ответ ученика: ${c.picked}
+Правильный ответ: ${c.correct}
+Пояснение из учебных материалов: ${c.e}
+
+Объясни, почему мой ответ неверный и как правильно рассуждать. Дай 2–3 источника.`;
+    if (await askClaude(intro)) return;
+  }
+  await localExplanation();
+}
+
+async function localExplanation() {
+  const c = ai.ctx;
+  const levelTip = {
+    "Лёгкий": "Это вопрос на знание определения или правила — перечитай их и попробуй своими словами пересказать.",
+    "Средний": "Здесь нужно применить правило к задаче. Выпиши, что дано и что нужно найти, и подбери подходящую формулу или правило.",
+    "Сложный": "Задача в несколько шагов. Разбей её на маленькие шаги и проверь каждый отдельно — ошибка часто прячется в промежуточном вычислении.",
+    "Олимпиадный": "В олимпиадных задачах важна идея. Попробуй рассмотреть частный случай, нарисовать схему или проверить ответ подстановкой."
+  }[c.level] || "";
+  aiAdd("bot", md(`**Почему «${c.picked}» — неверно.**\nПравильный ответ: **${c.correct}**.\n\n${c.e}\n\n**Вспомни теорию:** ${c.topicExplain.replace(/\n/g, " ")}\n\n**Совет:** ${levelTip}`) +
+    `<p class="small muted" style="margin:6px 0 0">Режим без ключа: объяснение из материалов NOVA. Подключи ключ Claude в Настройках для подробного разбора.</p>`);
+  const t = aiTyping();
+  const links = await wikiSearch(`${c.topic} ${c.subject === "Английский язык" ? "грамматика английского языка" : ""}`.trim());
+  t.remove();
+  aiAdd("bot", sourcesHtml(links.length ? links : [wikiSearchLink(c.topic)]));
+}
+
+/* --- Википедия (без ключа) --- */
+async function wikiSearch(query, limit = 3) {
+  try {
+    const url = "https://ru.wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srlimit=" + limit + "&srsearch=" + encodeURIComponent(query);
+    const r = await fetch(url);
+    const d = await r.json();
+    return (d.query?.search || []).map(x => ({ title: "Википедия: " + x.title, url: "https://ru.wikipedia.org/wiki/" + encodeURIComponent(x.title.replace(/ /g, "_")), raw: x.title }));
+  } catch (e) { return []; }
+}
+/** Ссылка на поиск по Википедии — работает, даже если API недоступен. */
+function wikiSearchLink(query) {
+  return { title: "Поиск в Википедии: " + query, url: "https://ru.wikipedia.org/w/index.php?search=" + encodeURIComponent(query) };
+}
+async function wikiExtract(title) {
+  try {
+    const url = "https://ru.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=1&explaintext=1&exsentences=3&format=json&origin=*&titles=" + encodeURIComponent(title);
+    const d = await (await fetch(url)).json();
+    const page = Object.values(d.query?.pages || {})[0];
+    return page?.extract || "";
+  } catch (e) { return ""; }
+}
+
+async function localFollowUp(question) {
+  const t = aiTyping();
+  const links = await wikiSearch(`${question} ${ai.ctx.topic}`);
+  let found = links.length ? links : await wikiSearch(question);
+  if (!found.length) found = [wikiSearchLink(question)];
+  const extract = found[0]?.raw ? await wikiExtract(found[0].raw) : "";
+  t.remove();
+  aiAdd("bot", (extract ? md(`Вот что пишет Википедия («${found[0].raw}»):\n${extract}`) : md("Без ключа я не могу ответить своими словами, но вот статьи, которые помогут разобраться.")) +
+    sourcesHtml(found) + `<p class="small muted" style="margin:6px 0 0">Для ответа на любой вопрос подключи ключ Claude в Настройках.</p>`);
+}
+
+/* --- Claude API (с ключом) --- */
+function webSearchTool(model) {
+  // У Opus и Sonnet — новая версия веб-поиска, у Haiku — базовая
+  return model.includes("haiku")
+    ? { type: "web_search_20250305", name: "web_search", max_uses: 3 }
+    : { type: "web_search_20260209", name: "web_search", max_uses: 3 };
+}
+
+/** Отправляет сообщение в Claude. Возвращает true, если ответ получен. */
+async function askClaude(userText) {
+  const st = settings();
+  const model = st.model || AI_DEFAULT_MODEL;
+  ai.messages.push({ role: "user", content: userText });
+  const t = aiTyping();
+  try {
+    const headers = {
+      "content-type": "application/json",
+      "x-api-key": st.apiKey,
+      "anthropic-version": "2026-10-21",
+      // Разрешает запрос прямо из браузера. Ключ хранится только в этом браузере.
+      "anthropic-dangerous-direct-browser-access": "true"
+    };
+    const base = { model, max_tokens: 16000, system: AI_SYSTEM_PROMPT, tools: [webSearchTool(model)], output_config: { effort: "low" } };
+    if (!model.includes("haiku")) { headers["anthropic-beta"] = "server-side-fallback-2026-07-01"; base.fallbacks = "default"; }
+
+    const call = async (useFallback) => {
+      const body = { ...base, messages: ai.messages };
+      const h = { ...headers };
+      if (!useFallback) { delete body.fallbacks; delete h["anthropic-beta"]; }
+      return fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: h, body: JSON.stringify(body) });
+    };
+
+    let texts = [], sources = [];
+    for (let step = 0; step < 4; step++) {
+      let res = await call(true);
+      if (res.status === 400) res = await call(false); // если запасной вариант не поддерживается
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error?.message || "HTTP " + res.status);
+      if (data.stop_reason === "refusal") throw new Error("Claude отказался отвечать на этот запрос");
+      ai.messages.push({ role: "assistant", content: data.content });
+      for (const b of data.content || []) {
+        if (b.type === "text") {
+          texts.push(b.text);
+          (b.citations || []).forEach(c => c.url && sources.push({ title: c.title || c.url, url: c.url }));
+        }
+        if (b.type === "web_search_tool_result" && Array.isArray(b.content)) {
+          b.content.forEach(r => r.url && sources.push({ title: r.title || r.url, url: r.url, fromSearch: true }));
+        }
+      }
+      if (data.stop_reason !== "pause_turn") break; // длинный поиск — продолжаем ход
+    }
+    t.remove();
+    // Сначала цитаты из ответа, затем результаты поиска; без повторов, не больше 3
+    const seen = new Set();
+    const uniq = [...sources.filter(s => !s.fromSearch), ...sources.filter(s => s.fromSearch)]
+      .filter(s => !seen.has(s.url) && seen.add(s.url)).slice(0, 3);
+    const text = texts.join("").trim() || "Не получилось сформулировать ответ.";
+    aiAdd("bot", md(text) + sourcesHtml(uniq.length ? uniq : [wikiSearchLink(ai.ctx.topic)], "🔗 Источники"));
+    return true;
+  } catch (e) {
+    t.remove();
+    ai.messages.pop(); // убираем неудачное сообщение
+    $("#aiMode").textContent = "без ключа";
+    $("#aiMode").classList.remove("on");
+    aiAdd("bot", `<span class="small">⚠️ Claude недоступен (${esc(e.message)}). Переключаюсь на режим без ключа.</span>`);
+    return false;
+  }
+}
+
+/* Обработчики панели */
+$("#aiClose").onclick = closeAi;
+$("#aiBackdrop").onclick = closeAi;
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeAi(); });
+$("#aiForm").onsubmit = async e => {
+  e.preventDefault();
+  const input = $("#aiInput");
+  const text = input.value.trim();
+  if (!text || ai.busy || !ai.ctx) return;
+  input.value = "";
+  aiAdd("me", esc(text));
+  ai.busy = true;
+  const claudeOn = hasKey() && $("#aiMode").classList.contains("on");
+  if (!(claudeOn && await askClaude(text))) await localFollowUp(text);
+  ai.busy = false;
 };
 
 /* =====================================================================
-   3. ДАННЫЕ: ТЕМЫ HOMETRY
+   10. НАСТРОЙКИ
+   ===================================================================== */
+function renderSettings(view) {
+  const st = settings();
+  view.innerHTML = `
+    ${modHead("⚙️", "Настройки", "AI-помощник и данные")}
+    <section class="card">
+      <h3>🤖 AI-помощник «Объясни ошибку»</h3>
+      <p class="small muted">Без ключа помощник показывает пояснение из материалов NOVA и статьи Википедии. С ключом Claude он объясняет ошибку под твой класс, отвечает на вопросы и ищет источники в интернете.</p>
+      <form id="setForm" autocomplete="off">
+        <label class="field"><span>API-ключ Claude (необязательно)</span><input type="password" name="apiKey" placeholder="sk-ant-..." value="${esc(st.apiKey)}"></label>
+        <label class="field"><span>Модель</span><select name="model">${Object.entries(AI_MODELS).map(([k, v]) => `<option value="${k}" ${st.model === k ? "selected" : ""}>${v}</option>`).join("")}</select></label>
+        <p class="small muted">🔒 Ключ хранится только в localStorage этого браузера и отправляется напрямую в api.anthropic.com. Не вводи его на чужом компьютере. Запросы оплачиваются с аккаунта владельца ключа.</p>
+        <div class="row">
+          <button class="btn btn-primary" type="submit">Сохранить</button>
+          ${st.apiKey ? `<button class="btn btn-ghost btn-danger" type="button" id="delKey">Удалить ключ</button>` : ""}
+        </div>
+      </form>
+    </section>
+    <section class="card">
+      <h3>🗂️ Данные</h3>
+      <p class="small muted">Прогресс, история тестов, задачи и команда хранятся в этом браузере.</p>
+      <button class="btn btn-ghost btn-danger" id="resetProgress">Сбросить прогресс и историю тестов</button>
+    </section>`;
+  $("#setForm", view).onsubmit = e => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    store.set("settings", { apiKey: f.get("apiKey").trim(), model: f.get("model") });
+    toast("Настройки сохранены ✓");
+    renderSettings(view);
+  };
+  const del = $("#delKey", view);
+  if (del) del.onclick = () => { store.set("settings", { ...settings(), apiKey: "" }); toast("Ключ удалён"); renderSettings(view); };
+  $("#resetProgress", view).onclick = () => {
+    if (!confirm("Удалить весь прогресс по темам и историю тестов?")) return;
+    store.set("progress", {}); store.set("history", []);
+    toast("Прогресс сброшен");
+  };
+}
+
+/* =====================================================================
+   11. ДАННЫЕ: ТЕМЫ HOMETRY
    ===================================================================== */
 const HT_TOPICS = [
   {
@@ -574,7 +1229,7 @@ const HT_TOPICS = [
 ];
 
 /* =====================================================================
-   4. ДАННЫЕ: ДЕМО-АНКЕТЫ TEAMSYNC
+   12. ДАННЫЕ: ДЕМО-АНКЕТЫ TEAMSYNC
    ===================================================================== */
 const DEMO_PEOPLE = [
   { id: "d1", name: "Айгерим", skills: ["Дизайн", "Figma", "Презентации"], interests: "UI/UX, иллюстрации, экология", looking: "Программиста для приложения про раздельный сбор мусора" },
@@ -589,254 +1244,7 @@ const DEMO_PEOPLE = [
 const AVATAR_COLORS = ["#8b7bff", "#5ee7df", "#ffb347", "#ff5c7a", "#3ddc97", "#6fa8ff", "#f78fd1", "#c3f16b"];
 
 /* =====================================================================
-   5. РОУТЕР (навигация без перезагрузки по #адресу)
-   ===================================================================== */
-const routes = {
-  "": renderHome,
-  weakpoint: renderWeakPoint,
-  hometry: renderHomeTry,
-  tasks: renderTasks,
-  team: renderTeam
-};
-
-function router() {
-  const [name, param] = location.hash.replace(/^#\/?/, "").split("/");
-  const render = routes[name] || renderHome;
-  if (name !== "weakpoint" && quiz && quiz.finished) quiz = null; // ушли с результата — сбрасываем тест
-  $$(".top-nav a").forEach(a => a.classList.toggle("active", a.dataset.nav === name));
-  const app = $("#app");
-  app.innerHTML = `<div class="view"></div>`;
-  render(app.firstElementChild, param ? decodeURIComponent(param) : undefined);
-  window.scrollTo({ top: 0 });
-}
-window.addEventListener("hashchange", router);
-
-/* =====================================================================
-   6. ГЛАВНАЯ
-   ===================================================================== */
-function renderHome(view) {
-  const history = store.get("tests", []);
-  const avg = history.length ? Math.round(history.reduce((s, h) => s + h.percent, 0) / history.length) : null;
-  const active = store.get("tasks", []).filter(t => !t.done).length;
-  const team = store.get("team", []).length;
-
-  view.innerHTML = `
-    <section class="hero">
-      <p class="eyebrow">✦ SMART STUDENT PLATFORM</p>
-      <h1>Учись проще.<br><em>Развивайся быстрее.</em></h1>
-      <p>Тесты с разбором ошибок, объяснения на бытовых предметах, планировщик дедлайнов и поиск команды — в одном месте.</p>
-    </section>
-
-    <section class="stats" aria-label="Статистика">
-      <div class="stat"><b>${avg === null ? "—" : avg + "%"}</b><span>средний результат тестов</span></div>
-      <div class="stat"><b>${active}</b><span>активных задач</span></div>
-      <div class="stat"><b>${team}</b><span>в моей команде</span></div>
-    </section>
-
-    <section class="modules" aria-label="Модули">
-      <a class="module" href="#/weakpoint" style="--glow:#8b7bff">
-        <span class="m-emoji">🧠</span><h3>WeakPoint</h3><p>Тесты и анализ ошибок</p>
-      </a>
-      <a class="module" href="#/hometry" style="--glow:#5ee7df">
-        <span class="m-emoji">🔍</span><h3>HomeTry</h3><p>Объяснение через предметы</p>
-      </a>
-      <a class="module" href="#/tasks" style="--glow:#ffb347">
-        <span class="m-emoji">📅</span><h3>TaskPlanner</h3><p>Задания и дедлайны</p>
-      </a>
-      <a class="module" href="#/team" style="--glow:#ff5c7a">
-        <span class="m-emoji">🤝</span><h3>TeamSync</h3><p>Поиск команды</p>
-      </a>
-    </section>`;
-}
-
-/* =====================================================================
-   7. МОДУЛЬ WEAKPOINT
-   ===================================================================== */
-let quiz = null; // текущий тест: { subject, questions, answers[], i }
-
-/** Сводка по темам предмета за всю историю прохождений. */
-function topicStats(subjectId) {
-  const stats = {};
-  store.get("tests", []).filter(h => h.subject === subjectId).forEach(h => {
-    Object.entries(h.topics).forEach(([topic, v]) => {
-      stats[topic] = stats[topic] || { right: 0, total: 0 };
-      stats[topic].right += v.right;
-      stats[topic].total += v.total;
-    });
-  });
-  return stats;
-}
-
-function weakTopicsHtml(stats) {
-  const weak = Object.entries(stats)
-    .map(([topic, v]) => ({ topic, p: Math.round(v.right / v.total * 100) }))
-    .filter(x => x.p < 70)
-    .sort((a, b) => a.p - b.p);
-  if (!weak.length) return `<p class="muted">Слабых тем не найдено — все темы выше 70%. Так держать! 🎉</p>`;
-  return weak.map(w => `
-    <div class="weak"><b>${esc(w.topic)} — ${w.p}%</b><br><span class="small">📌 ${esc(TOPIC_TIPS[w.topic] || "Повтори теорию и реши ещё несколько задач по этой теме.")}</span></div>`).join("");
-}
-
-function renderWeakPoint(view) {
-  if (quiz && quiz.finished) return renderQuizResult(view);
-  if (quiz) return renderQuestion(view);
-
-  const history = store.get("tests", []);
-  view.innerHTML = `
-    ${modHead("🧠", "WeakPoint", "Пройди тест — найдём слабые темы и подскажем, что повторить")}
-    <h3>Выбери предмет</h3>
-    <div class="subj-grid">
-      ${Object.entries(SUBJECTS).map(([id, s]) => {
-        const last = history.find(h => h.subject === id);
-        return `<button class="subj" data-subject="${id}">
-          <span class="s-emoji">${s.emoji}</span>
-          <b>${s.name}</b>
-          <small>${s.questions.length} вопросов${last ? ` · последний: <span class="pct ${pctClass(last.percent)}">${last.percent}%</span>` : ""}</small>
-        </button>`;
-      }).join("")}
-    </div>
-
-    <div class="two-col">
-      <section class="card">
-        <h3>📉 Слабые темы</h3>
-        ${history.length
-          ? Object.keys(SUBJECTS).filter(id => history.some(h => h.subject === id)).map(id =>
-              `<p class="small muted" style="margin:10px 0 6px">${SUBJECTS[id].emoji} ${SUBJECTS[id].name}</p>${weakTopicsHtml(topicStats(id))}`).join("")
-          : emptyState("🎯", "Пока нечего анализировать", "Пройди первый тест — здесь появятся темы, которые стоит подтянуть.")}
-      </section>
-      <section class="card">
-        <div class="row between"><h3 style="margin:0">🕑 История прохождений</h3>
-          ${history.length ? `<button class="btn btn-sm btn-ghost btn-danger" id="clearHistory">Очистить</button>` : ""}</div>
-        ${history.length
-          ? history.slice(0, 15).map(h => `
-              <div class="hist-item">
-                <div><b>${SUBJECTS[h.subject].emoji} ${SUBJECTS[h.subject].name}</b><br><span class="small muted">${fmtDate(h.date)} · ${h.score} из ${h.total}</span></div>
-                <span class="pct ${pctClass(h.percent)}">${h.percent}%</span>
-              </div>`).join("")
-          : emptyState("📝", "История пуста", "Результаты каждого теста будут сохраняться здесь.")}
-      </section>
-    </div>`;
-
-  $$("[data-subject]", view).forEach(b => b.onclick = () => startQuiz(b.dataset.subject));
-  const clear = $("#clearHistory", view);
-  if (clear) clear.onclick = () => {
-    if (confirm("Удалить всю историю тестов?")) { store.set("tests", []); router(); }
-  };
-}
-
-function startQuiz(subjectId) {
-  // Перемешиваем вопросы и варианты, запоминая, где правильный ответ
-  const questions = shuffle(SUBJECTS[subjectId].questions).map(q => {
-    const order = shuffle(q.o.map((_, i) => i));
-    return { ...q, o: order.map(i => q.o[i]), a: order.indexOf(q.a) };
-  });
-  quiz = { subject: subjectId, questions, answers: Array(questions.length).fill(null), i: 0 };
-  router();
-}
-
-function renderQuestion(view) {
-  const q = quiz.questions[quiz.i];
-  const total = quiz.questions.length;
-  const s = SUBJECTS[quiz.subject];
-  view.innerHTML = `
-    <div class="mod-head">
-      <a class="back" href="#/weakpoint" id="quitQuiz" aria-label="Выйти из теста">←</a>
-      <div><h1>${s.emoji} ${s.name}</h1><p>Тема: ${esc(q.t)}</p></div>
-    </div>
-    <section class="card question">
-      <div class="q-top"><span>Вопрос ${quiz.i + 1} из ${total}</span><span>${quiz.answers.filter(a => a !== null).length} отвечено</span></div>
-      <div class="progress"><i style="width:${(quiz.i / total) * 100}%"></i></div>
-      <h2>${esc(q.q)}</h2>
-      <div class="options">
-        ${q.o.map((opt, k) => `<button class="option ${quiz.answers[quiz.i] === k ? "picked" : ""}" data-k="${k}">${esc(opt)}</button>`).join("")}
-      </div>
-      <div class="row between" style="margin-top:16px">
-        <button class="btn btn-ghost" id="prevQ" ${quiz.i === 0 ? "disabled" : ""}>← Назад</button>
-        <button class="btn btn-primary" id="nextQ" ${quiz.answers[quiz.i] === null ? "disabled" : ""}>${quiz.i === total - 1 ? "Завершить тест" : "Далее →"}</button>
-      </div>
-    </section>`;
-
-  $("#quitQuiz", view).onclick = e => {
-    e.preventDefault();
-    if (confirm("Выйти из теста? Прогресс не сохранится.")) { quiz = null; router(); }
-  };
-  $$(".option", view).forEach(b => b.onclick = () => { quiz.answers[quiz.i] = +b.dataset.k; renderQuestion(view); });
-  $("#prevQ", view).onclick = () => { quiz.i--; renderQuestion(view); };
-  $("#nextQ", view).onclick = () => {
-    if (quiz.i < total - 1) { quiz.i++; renderQuestion(view); }
-    else finishQuiz();
-  };
-}
-
-function finishQuiz() {
-  const topics = {};
-  let score = 0;
-  quiz.questions.forEach((q, i) => {
-    const right = quiz.answers[i] === q.a;
-    if (right) score++;
-    topics[q.t] = topics[q.t] || { right: 0, total: 0 };
-    topics[q.t].total++;
-    if (right) topics[q.t].right++;
-  });
-  const total = quiz.questions.length;
-  const record = { id: uid(), subject: quiz.subject, date: new Date().toISOString(), score, total, percent: Math.round(score / total * 100), topics };
-  store.set("tests", [record, ...store.get("tests", [])].slice(0, 100));
-  quiz.finished = true;
-  quiz.record = record;
-  router();
-}
-
-function renderQuizResult(view) {
-  const { record, questions, answers, subject } = quiz;
-  const s = SUBJECTS[subject];
-  const mistakes = questions.map((q, i) => ({ q, picked: answers[i] })).filter(x => x.picked !== x.q.a);
-  const color = record.percent >= 80 ? "var(--ok)" : record.percent >= 50 ? "var(--warn)" : "var(--danger)";
-  const msg = record.percent >= 80 ? "Отличный результат! 🔥" : record.percent >= 50 ? "Неплохо, но есть что подтянуть 💪" : "Не страшно — разберём ошибки и попробуем снова 🌱";
-
-  view.innerHTML = `
-    ${modHead(s.emoji, "Результат: " + s.name, fmtDate(record.date), "#/weakpoint")}
-    <section class="card result-top">
-      <div class="ring" style="--p:${record.percent}; --ring-c:${color}"><div>${record.percent}%</div></div>
-      <div>
-        <h2 style="margin-bottom:4px">${record.score} из ${record.total} правильно</h2>
-        <p class="muted">${msg}</p>
-        <div class="row">
-          <button class="btn btn-primary" id="retry">↻ Пройти ещё раз</button>
-          <button class="btn" id="toSubjects">Другой предмет</button>
-        </div>
-      </div>
-    </section>
-
-    <div class="two-col">
-      <section class="card">
-        <h3>❌ Ошибки (${mistakes.length})</h3>
-        ${mistakes.length ? mistakes.map(m => `
-          <div class="mistake">
-            <p><b>${esc(m.q.q)}</b></p>
-            <p class="bad">Твой ответ: ${esc(m.q.o[m.picked])}</p>
-            <p class="good">Правильно: ${esc(m.q.o[m.q.a])}</p>
-            <p class="muted">💡 ${esc(m.q.e)}</p>
-          </div>`).join("")
-        : emptyState("🏆", "Ни одной ошибки!", "Попробуй другой предмет.")}
-      </section>
-      <section class="card">
-        <h3>📊 По темам в этом тесте</h3>
-        ${Object.entries(record.topics).map(([t, v]) => {
-          const p = Math.round(v.right / v.total * 100);
-          return `<div class="topic-row"><div class="row"><span>${esc(t)}</span><span class="pct ${pctClass(p)}">${v.right}/${v.total}</span></div><div class="progress"><i style="width:${p}%"></i></div></div>`;
-        }).join("")}
-        <h3 style="margin-top:18px">🎯 Что повторить</h3>
-        ${weakTopicsHtml(record.topics)}
-      </section>
-    </div>`;
-
-  $(".back", view).onclick = e => { e.preventDefault(); quiz = null; router(); };
-  $("#retry", view).onclick = () => startQuiz(subject);
-  $("#toSubjects", view).onclick = () => { quiz = null; router(); };
-}
-
-/* =====================================================================
-   8. МОДУЛЬ HOMETRY
+   13. МОДУЛЬ HOMETRY
    ===================================================================== */
 function renderHomeTry(view, topicId) {
   if (topicId) return renderHomeTryTopic(view, topicId);
@@ -887,14 +1295,14 @@ function renderHomeTryTopic(view, id) {
       <section class="card">
         <h3>✅ Вывод</h3>
         <div class="conclusion">${esc(t.conclusion)}</div>
-        <p class="small muted" style="margin-top:14px">Хочешь проверить знания? Пройди тест в WeakPoint.</p>
-        <a class="btn btn-block" href="#/weakpoint">🧠 Перейти к тестам</a>
+        <p class="small muted" style="margin-top:14px">Хочешь проверить знания? Пройди тест по теме.</p>
+        <a class="btn btn-block" href="#/s/physics">⚡ Темы по физике</a>
       </section>
     </div>`;
 }
 
 /* =====================================================================
-   9. МОДУЛЬ TASKPLANNER
+   14. МОДУЛЬ TASKPLANNER
    ===================================================================== */
 const PRIORITY = { high: "Высокий", medium: "Средний", low: "Низкий" };
 const PRIORITY_RANK = { high: 0, medium: 1, low: 2 };
@@ -1048,7 +1456,7 @@ function renderTasks(view) {
 }
 
 /* =====================================================================
-   10. МОДУЛЬ TEAMSYNC
+   15. МОДУЛЬ TEAMSYNC
    ===================================================================== */
 let teamTab = "feed";
 let teamQuery = "";
@@ -1173,10 +1581,15 @@ function renderTeam(view) {
   };
 }
 
+
 /* =====================================================================
-   11. СТАРТ
+   16. СТАРТ: загружаем оглавление данных и открываем нужный раздел
    ===================================================================== */
-router();
+(async function init() {
+  try { INDEX = (await loadJson("index")) || {}; }
+  catch (e) { INDEX = {}; console.warn("Нет data/index.json — запусти tools/build-data.py", e); }
+  router();
+})();
 </script>
 </body>
 </html>
