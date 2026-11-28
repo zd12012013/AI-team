@@ -64,6 +64,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .top-nav { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
 .top-nav a { flex: none; text-decoration: none; color: var(--muted); font-size: .88rem; font-weight: 600; padding: 8px 10px; border-radius: 999px; transition: background .2s, color .2s; }
 .top-nav a:hover { color: var(--text); background: var(--bg-2); }
+.lang-sw { display: flex; align-items: center; gap: 2px; flex: none; margin-left: 6px; padding: 3px; border-radius: 999px; background: var(--bg-2); border: 1px solid var(--line); font-size: .75rem; font-weight: 800; }
+.lang-sw button { border: 0; background: transparent; color: var(--muted); padding: 5px 8px; border-radius: 999px; cursor: pointer; font-weight: 800; font-size: .75rem; }
+.lang-sw button.on { background: var(--accent); color: #fff; }
+.lang-sw span { color: #b9c7c0; }
+.no-tr { display: inline-block; font-size: .68rem; font-weight: 800; color: #9a5b00; background: #fff4dc; border-radius: 999px; padding: 1px 7px; vertical-align: middle; }
+.kz-check { display: inline-block; font-size: .68rem; font-weight: 700; color: var(--muted); background: var(--bg-2); border-radius: 999px; padding: 1px 7px; vertical-align: middle; }
 .top-nav a.active { color: var(--accent-dark); background: var(--accent-light); }
 .top-nav .lbl { display: none; }
 
@@ -407,14 +413,8 @@ main.wrap { padding-bottom: 90px; }
       <b><span>✦</span> NOVA</b>
       <small>SMART STUDENT PLATFORM</small>
     </a>
-    <nav class="top-nav" aria-label="Разделы">
-      <a href="#/" data-nav="">📚<span class="lbl"> Предметы</span></a>
-      <a href="#/weak" data-nav="weak">🧠<span class="lbl"> WeakPoint</span></a>
-      <a href="#/tasks" data-nav="tasks">📅<span class="lbl"> Задачи</span></a>
-      <a href="#/team" data-nav="team">🤝<span class="lbl"> Команда</span></a>
-      <a href="#/premium" data-nav="premium">✦<span class="lbl"> Premium</span></a>
-      <a href="#/settings" data-nav="settings">⚙️<span class="lbl"> Настройки</span></a>
-    </nav>
+    <nav class="top-nav" id="topNav" aria-label="Разделы"></nav>
+    <div class="lang-sw" id="langSw" role="group" aria-label="Язык / Тіл"></div>
   </div>
 </header>
 
@@ -446,6 +446,7 @@ main.wrap { padding-bottom: 90px; }
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<script src="js/i18n.js"></script>
 <script>
 "use strict";
 
@@ -459,7 +460,7 @@ const store = {
   },
   set(key, value) {
     try { localStorage.setItem("nova." + key, JSON.stringify(value)); }
-    catch (e) { toast("Не удалось сохранить: память браузера недоступна"); }
+    catch (e) { toast(tr("Не удалось сохранить: память браузера недоступна")); }
   }
 };
 
@@ -470,8 +471,8 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const pctClass = p => (p >= 80 ? "good" : p >= 50 ? "mid" : "bad");
-const fmtDate = iso => new Date(iso).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-const plural = (n, one, few, many) => { const m10 = n % 10, m100 = n % 100; return m10 === 1 && m100 !== 11 ? one : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? few : many; };
+const fmtDate = iso => new Date(iso).toLocaleString(locale(), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+const plural = (n, one, few, many) => trn(n, one, few, many);
 
 function toast(msg) {
   const t = $("#toast");
@@ -484,7 +485,7 @@ function toast(msg) {
 /** Шапка раздела с кнопкой «Назад». */
 function modHead(emoji, title, subtitle, backHref = "#/") {
   return `<div class="mod-head">
-      <a class="back" href="${backHref}" aria-label="Назад">←</a>
+      <a class="back" href="${backHref}" aria-label="${tr("Назад")}">←</a>
       <div><h1>${emoji} ${title}</h1>${subtitle ? `<p>${subtitle}</p>` : ""}</div>
     </div>`;
 }
@@ -522,12 +523,15 @@ function highlightCpp(code) {
 }
 const codeBlock = code => `<pre class="code"><code>${highlightCpp(code)}</code></pre>`;
 
-/* Язык интерфейса и доступ к полям данных (переводы подключаются позже) */
-const getLang = () => store.get("lang", "ru");
-const subjectName = s => s.name;
-const topicTitle = t => t.title;
-const topicExplain = t => t.explain;
+/* Доступ к полям данных на выбранном языке (см. js/i18n.js) */
+const subjectName = s => (isKz() ? SUBJECT_KZ[s.id] || s.name : s.name);
+const topicTitle = t => L(t, "title");
+const topicExplain = t => L(t, "explain");
 const topicLevels = t => t.levels;
+const qText = q => L(q, "q");
+const qOpts = q => (isKz() && q.kz?.o ? q.kz.o : q.o);
+const qExpl = q => L(q, "e");
+const levelName = l => tr(l.name);
 /** Что сейчас открыто — нужно NOVA AI для контекста. */
 let PAGE = {};
 
@@ -614,12 +618,13 @@ function saveResult(sid, grade, topic, level, score, total) {
   l.best = Math.max(l.best, percent); l.right += score; l.total += total; l.attempts++;
   p.levels[level] = l;
   p.title = topic.title;
+  p.title_kz = topic.kz?.title;
   p.done = Object.values(p.levels).some(x => x.best >= PASS);
   p.last = new Date().toISOString();
   all[key] = p;
   store.set("progress", all);
   const hist = store.get("history", []);
-  hist.unshift({ sid, grade, tid: topic.id, title: topic.title, level, score, total, percent, date: p.last });
+  hist.unshift({ sid, grade, tid: topic.id, title: topic.title, title_kz: topic.kz?.title, level, score, total, percent, date: p.last });
   store.set("history", hist.slice(0, 200));
   return percent;
 }
@@ -658,8 +663,8 @@ async function router() {
     await routes[name](app.firstElementChild, ...parts.slice(1));
   } catch (e) {
     console.warn(e);
-    app.firstElementChild.innerHTML = modHead("😕", "Не получилось открыть раздел", esc(e.message)) +
-      emptyState("📂", "Данные не загрузились", "Проверь, что папка data/ лежит рядом с index.html, и обнови страницу.");
+    app.firstElementChild.innerHTML = modHead("😕", tr("Не получилось открыть раздел"), esc(e.message)) +
+      emptyState("📂", tr("Данные не загрузились"), tr("Проверь, что папка data/ лежит рядом с index.html, и обнови страницу."));
   }
 }
 window.addEventListener("hashchange", router);
@@ -667,6 +672,24 @@ window.addEventListener("hashchange", router);
 /* =====================================================================
    5. ГЛАВНАЯ: предметы, статистика, инструменты
    ===================================================================== */
+/* =====================================================================
+   МЕНЮ И ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКА
+   ===================================================================== */
+const NAV = [["", "📚", "Предметы"], ["weak", "🧠", "WeakPoint"], ["tasks", "📅", "Задачи"], ["team", "🤝", "Команда"], ["premium", "✦", "Premium"], ["settings", "⚙️", "Настройки"]];
+function renderNav() {
+  document.documentElement.lang = isKz() ? "kk" : "ru";
+  $("#topNav").innerHTML = NAV.map(([k, ico, name]) => `<a href="#/${k}" data-nav="${k}">${ico}<span class="lbl"> ${tr(name)}</span></a>`).join("");
+  $("#langSw").innerHTML = Object.entries(LANGS).map(([k, v]) => `<button type="button" data-lang="${k}" class="${getLang() === k ? "on" : ""}" aria-pressed="${getLang() === k}">${v}</button>`).join("<span>|</span>");
+  $$("[data-lang]").forEach(b => b.onclick = () => setLang(b.dataset.lang));
+}
+function setLang(lang) {
+  if (lang === getLang()) return;
+  store.set("lang", lang);
+  renderNav();
+  router();
+  if (typeof aiHeader === "function") aiHeader();
+}
+
 function renderHome(view) {
   const hist = store.get("history", []);
   const avg = hist.length ? Math.round(hist.reduce((s, h) => s + h.percent, 0) / hist.length) : null;
@@ -676,39 +699,39 @@ function renderHome(view) {
 
   view.innerHTML = `
     <section class="hero">
-      <p class="eyebrow">✦ ШКОЛЬНАЯ ПРОГРАММА КАЗАХСТАНА · 5–11 КЛАСС</p>
-      <h1>Учись проще.<br><em>Развивайся быстрее.</em></h1>
-      <p>Выбери предмет и класс — все темы по программе, короткие объяснения и тесты четырёх уровней: от лёгкого до олимпиадного.</p>
+      <p class="eyebrow">${tr("✦ ШКОЛЬНАЯ ПРОГРАММА КАЗАХСТАНА · 5–11 КЛАСС")}</p>
+      <h1>${tr("Учись проще.")}<br><em>${tr("Развивайся быстрее.")}</em></h1>
+      <p>${tr("Выбери предмет и класс — все темы по программе, короткие объяснения и тесты четырёх уровней: от лёгкого до олимпиадного.")}</p>
     </section>
 
-    <section class="stats" aria-label="Статистика">
-      <div class="stat"><b>${avg === null ? "—" : avg + "%"}</b><span>средний результат тестов</span></div>
-      <div class="stat"><b>${done}</b><span>${plural(done, "тема пройдена", "темы пройдены", "тем пройдено")}</span></div>
-      <div class="stat"><b>${active}</b><span>активных задач</span></div>
-      <div class="stat"><b>${team}</b><span>в моей команде</span></div>
+    <section class="stats" aria-label="${tr("Статистика")}">
+      <div class="stat"><b>${avg === null ? "—" : avg + "%"}</b><span>${tr("средний результат тестов")}</span></div>
+      <div class="stat"><b>${done}</b><span>${tr(plural(done, "тема пройдена", "темы пройдены", "тем пройдено"))}</span></div>
+      <div class="stat"><b>${active}</b><span>${tr("активных задач")}</span></div>
+      <div class="stat"><b>${team}</b><span>${tr("в моей команде")}</span></div>
     </section>
 
-    <div class="section-title"><h2>📚 Предметы</h2><span class="small muted">по классам 5–11</span></div>
+    <div class="section-title"><h2>${tr("📚 Предметы")}</h2><span class="small muted">${tr("по классам 5–11")}</span></div>
     <section class="subjects">
       ${SUBJECTS.map(s => {
         const ready = isReady(s.id);
         const p = subjectPercent(s.id);
         return `<a class="subject" href="#/s/${s.id}" style="--c:${s.color}">
-          ${ready ? "" : `<span class="soon">скоро</span>`}
+          ${ready ? "" : `<span class="soon">${tr("скоро")}</span>`}
           <span class="s-icon">${s.emoji}</span>
-          <b>${s.name}</b>
-          <small>${s.grades[0]}–${s.grades[s.grades.length - 1]} класс${ready ? ` · ${p}% пройдено` : ""}</small>
+          <b>${subjectName(s)}</b>
+          <small>${tr("{a}–{b} класс", { a: s.grades[0], b: s.grades[s.grades.length - 1] })}${ready ? ` · ${tr("{p}% пройдено", { p })}` : ""}</small>
           ${ready ? `<div class="progress"><i style="width:${p}%"></i></div>` : ""}
         </a>`;
       }).join("")}
     </section>
 
-    <div class="section-title"><h2>🧰 Инструменты</h2></div>
+    <div class="section-title"><h2>${tr("🧰 Инструменты")}</h2></div>
     <section class="tools">
-      <a class="tool" href="#/weak"><span>🧠</span><div><b>WeakPoint</b><small>Слабые темы</small></div></a>
-      <a class="tool" href="#/hometry"><span>🔍</span><div><b>HomeTry</b><small>Опыты дома</small></div></a>
-      <a class="tool" href="#/tasks"><span>📅</span><div><b>TaskPlanner</b><small>Дедлайны</small></div></a>
-      <a class="tool" href="#/team"><span>🤝</span><div><b>TeamSync</b><small>Поиск команды</small></div></a>
+      <a class="tool" href="#/weak"><span>🧠</span><div><b>WeakPoint</b><small>${tr("Слабые темы")}</small></div></a>
+      <a class="tool" href="#/hometry"><span>🔍</span><div><b>HomeTry</b><small>${tr("Опыты дома")}</small></div></a>
+      <a class="tool" href="#/tasks"><span>📅</span><div><b>TaskPlanner</b><small>${tr("Дедлайны")}</small></div></a>
+      <a class="tool" href="#/team"><span>🤝</span><div><b>TeamSync</b><small>${tr("Поиск команды")}</small></div></a>
     </section>`;
 }
 
@@ -721,15 +744,15 @@ async function renderSubjectOrGrade(view, sid, grade) {
   if (grade) return renderGrade(view, s, +grade);
 
   if (!isReady(sid)) {
-    view.innerHTML = modHead(s.emoji, s.name, `${s.grades[0]}–${s.grades[s.grades.length - 1]} класс`) +
-      emptyState("🛠️", "Раздел в разработке", "Темы и тесты по этому предмету скоро появятся. Пока загляни в другие предметы.");
+    view.innerHTML = modHead(s.emoji, subjectName(s), tr("{a}–{b} класс", { a: s.grades[0], b: s.grades[s.grades.length - 1] })) +
+      emptyState("🛠️", tr("Раздел в разработке"), tr("Темы и тесты по этому предмету скоро появятся. Пока загляни в другие предметы."));
     return;
   }
   const p = subjectPercent(sid);
   view.innerHTML = `
-    ${modHead(s.emoji, s.name, "Выбери класс")}
+    ${modHead(s.emoji, subjectName(s), tr("Выбери класс"))}
     <section class="card">
-      <div class="row between small"><b>Пройдено по предмету</b><span>${doneCount(sid)} из ${subjectTopicCount(sid)} тем</span></div>
+      <div class="row between small"><b>${tr("Пройдено по предмету")}</b><span>${tr("{d} из {n} тем", { d: doneCount(sid), n: subjectTopicCount(sid) })}</span></div>
       <div class="big-progress" style="margin-top:8px"><div class="progress"><i style="width:${p}%"></i></div><b class="pct ${pctClass(p)}">${p}%</b></div>
     </section>
     <section class="grades">
@@ -737,43 +760,43 @@ async function renderSubjectOrGrade(view, sid, grade) {
         const n = topicCount(sid, g);
         const gp = gradePercent(sid, g);
         return `<a class="grade" href="#/s/${sid}/${g}">
-          <span class="g-num">${g}</span><b>${g} класс</b>
-          <small>${n ? `${n} ${plural(n, "тема", "темы", "тем")} · ${gp}%` : "темы скоро появятся"}</small>
+          <span class="g-num">${g}</span><b>${tr("{g} класс", { g })}</b>
+          <small>${n ? `${n} ${tr(plural(n, "тема", "темы", "тем"))} · ${gp}%` : tr("темы скоро появятся")}</small>
           <div class="progress"><i style="width:${gp}%"></i></div>
         </a>`;
       }).join("")}
     </section>
-    <p class="small muted" style="margin-top:14px">Классы и темы — по типовой учебной программе РК (обновлённое содержание образования).</p>`;
+    <p class="small muted" style="margin-top:14px">${tr("Классы и темы — по типовой учебной программе РК (обновлённое содержание образования).")}</p>`;
 }
 
 async function renderGrade(view, s, grade) {
   const data = await getSubject(s.id);
   const cls = data.classes[grade];
   if (!cls) {
-    view.innerHTML = modHead(s.emoji, `${s.name} · ${grade} класс`, "", `#/s/${s.id}`) +
-      emptyState("🛠️", "Темы этого класса скоро появятся", "Выбери другой класс.");
+    view.innerHTML = modHead(s.emoji, `${subjectName(s)} · ${tr("{g} класс", { g: grade })}`, "", `#/s/${s.id}`) +
+      emptyState("🛠️", tr("Темы этого класса скоро появятся"), tr("Выбери другой класс."));
     return;
   }
   const prog = getProgress();
   const gp = gradePercent(s.id, grade);
   view.innerHTML = `
-    <nav class="crumbs"><a href="#/s/${s.id}">${s.name}</a> › <span>${grade} класс</span></nav>
-    ${modHead(s.emoji, `${s.name} · ${grade} класс`, cls.book ? esc(cls.book) : "Все темы по программе", `#/s/${s.id}`)}
+    <nav class="crumbs"><a href="#/s/${s.id}">${subjectName(s)}</a> › <span>${tr("{g} класс", { g: grade })}</span></nav>
+    ${modHead(s.emoji, `${subjectName(s)} · ${tr("{g} класс", { g: grade })}`, cls.book ? esc(cls.book) : tr("Все темы по программе"), `#/s/${s.id}`)}
     <section class="card">
-      <div class="row between small"><b>Пройдено в ${grade} классе</b><span>${doneCount(s.id, grade)} из ${topicCount(s.id, grade)}</span></div>
+      <div class="row between small"><b>${tr("Пройдено в {g} классе", { g: grade })}</b><span>${tr("{d} из {n}", { d: doneCount(s.id, grade), n: topicCount(s.id, grade) })}</span></div>
       <div class="big-progress" style="margin-top:8px"><div class="progress"><i style="width:${gp}%"></i></div><b class="pct ${pctClass(gp)}">${gp}%</b></div>
     </section>
     ${cls.sections.map(sec => `
       <section class="section">
-        <h3>${esc(sec.title)}</h3>
+        <h3>${esc(L(sec, "title"))}${noKzTag(sec, "title")}</h3>
         <div class="topics">
           ${sec.topics.map(t => {
             const p = prog[pKey(s.id, grade, t.id)];
             const best = p ? Math.max(...Object.values(p.levels).map(l => l.best)) : null;
             return `<a class="topic-row ${p?.done ? "done" : ""}" href="#/t/${s.id}/${grade}/${t.id}">
               <span class="tick">${p?.done ? "✓" : ""}</span>
-              <span class="t-name">${esc(t.title)}</span>
-              <span class="t-side">${t.check ? `<span class="badge-check" title="Проверить по учебнику">проверить</span>` : ""}${best !== null ? `<span class="pct ${pctClass(best)}">${best}%</span>` : ""}›</span>
+              <span class="t-name">${esc(topicTitle(t))}${noKzTag(t, "title")}</span>
+              <span class="t-side">${t.check ? `<span class="badge-check" title="${tr("Проверить по учебнику")}">${tr("проверить")}</span>` : ""}${best !== null ? `<span class="pct ${pctClass(best)}">${best}%</span>` : ""}›</span>
             </a>`;
           }).join("")}
         </div>
@@ -787,34 +810,34 @@ async function renderTopic(view, sid, grade, tid) {
   if (!s || !found) { location.hash = `#/s/${sid}/${grade}`; return; }
   const { topic, section } = found;
   const p = topicProgress(sid, grade, tid);
-  PAGE = { sid, grade: +grade, topic, section: section.title };
+  PAGE = { sid, grade: +grade, topic, section: L(section, "title") };
   view.innerHTML = `
-    <nav class="crumbs"><a href="#/s/${sid}">${s.name}</a> › <a href="#/s/${sid}/${grade}">${grade} класс</a> › <span>${esc(topic.title)}</span></nav>
-    ${modHead(s.emoji, esc(topic.title), esc(section.title), `#/s/${sid}/${grade}`)}
-    ${topic.check ? `<p class="badge-check" style="display:inline-block;margin-bottom:12px">⚠️ Тему нужно сверить с учебником</p>` : ""}
+    <nav class="crumbs"><a href="#/s/${sid}">${subjectName(s)}</a> › <a href="#/s/${sid}/${grade}">${tr("{g} класс", { g: grade })}</a> › <span>${esc(topicTitle(topic))}</span></nav>
+    ${modHead(s.emoji, esc(topicTitle(topic)) + noKzTag(topic, "title") + kzCheckTag(topic), esc(L(section, "title")), `#/s/${sid}/${grade}`)}
+    ${topic.check ? `<p class="badge-check" style="display:inline-block;margin-bottom:12px">${tr("⚠️ Тему нужно сверить с учебником")}</p>` : ""}
     <section class="card explain-card">
-      <h3>💡 Коротко о теме</h3>
-      ${topic.explain.split("\n").map(x => `<p>${esc(x)}</p>`).join("")}
-      ${topic.formula ? `<p><b>Главное:</b> ${esc(topic.formula)}</p>` : ""}
+      <h3>${tr("💡 Коротко о теме")}${noKzTag(topic, "explain")}</h3>
+      ${topicExplain(topic).split("\n").map(x => `<p>${esc(x)}</p>`).join("")}
+      ${topic.formula ? `<p><b>${tr("Главное:")}</b> ${esc(L(topic, "formula"))}</p>` : ""}
     </section>
     ${(topic.examples || []).length ? `<section class="card">
-      <h3>👨‍💻 Примеры на C++</h3>
+      <h3>${tr("👨‍💻 Примеры на C++")}</h3>
       ${topic.examples.map(ex => `<div class="example">
-        <h4>${esc(ex.title)}</h4>
+        <h4>${esc(L(ex, "title"))}</h4>
         ${codeBlock(ex.code)}
-        <div class="io">${ex.in ? `<div><b>Ввод:</b><pre>${esc(ex.in)}</pre></div>` : ""}<div><b>Вывод:</b><pre>${esc(ex.out)}</pre></div></div>
+        <div class="io">${ex.in ? `<div><b>${tr("Ввод:")}</b><pre>${esc(ex.in)}</pre></div>` : ""}<div><b>${tr("Вывод:")}</b><pre>${esc(ex.out)}</pre></div></div>
       </div>`).join("")}
     </section>` : ""}
-    <div class="section-title"><h2>Выбери сложность</h2>${p?.done ? `<span class="chip on">✓ тема пройдена</span>` : `<span class="small muted">сдано от ${PASS}%</span>`}</div>
+    <div class="section-title"><h2>${tr("Выбери сложность")}</h2>${p?.done ? `<span class="chip on">${tr("✓ тема пройдена")}</span>` : `<span class="small muted">${tr("сдано от {p}%", { p: PASS })}</span>`}</div>
     <section class="levels">
       ${LEVELS.map((l, i) => {
         const qs = topic.levels[l.id] || [];
         const lp = p?.levels[l.id];
         return `<button class="level ${lp?.best >= PASS ? "passed" : ""}" style="--lc:${l.color}" data-level="${l.id}" ${qs.length ? "" : "disabled"}>
           <span class="l-dot">${i + 1}</span>
-          <b>${l.name}</b>
-          <small>${l.hint}</small>
-          <small>${qs.length} ${plural(qs.length, "вопрос", "вопроса", "вопросов")}${lp ? ` · лучший: <span class="pct ${pctClass(lp.best)}">${lp.best}%</span>` : ""}</small>
+          <b>${levelName(l)}</b>
+          <small>${tr(l.hint)}</small>
+          <small>${qs.length} ${tr(plural(qs.length, "вопрос", "вопроса", "вопросов"))}${lp ? ` · ${tr("лучший:")} <span class="pct ${pctClass(lp.best)}">${lp.best}%</span>` : ""}</small>
         </button>`;
       }).join("")}
     </section>`;
@@ -833,12 +856,14 @@ async function renderQuiz(view, sid, grade, tid, level) {
   const found = findTopic(data, grade, tid);
   const lv = levelById(level);
   if (!s || !found || !lv || !(found.topic.levels[level] || []).length) { location.hash = `#/t/${sid}/${grade}/${tid}`; return; }
-  PAGE = { sid, grade: +grade, topic: found.topic, section: found.section.title };
+  PAGE = { sid, grade: +grade, topic: found.topic, section: L(found.section, "title") };
   const key = [sid, grade, tid, level].join("|");
   if (!quiz || quiz.key !== key) {
     const questions = shuffle(found.topic.levels[level]).map(q => {
+      if (!q.o) return { ...q };                      // задача с вводом ответа — без вариантов
       const order = shuffle(q.o.map((_, i) => i));
-      return { ...q, o: order.map(i => q.o[i]), a: order.indexOf(q.a ?? 0) };
+      const kz = q.kz ? { ...q.kz, ...(q.kz.o ? { o: order.map(i => q.kz.o[i]) } : {}) } : undefined;
+      return { ...q, o: order.map(i => q.o[i]), a: order.indexOf(q.a ?? 0), kz };
     });
     quiz = { key, sid, grade: +grade, tid, level, topic: found.topic, questions, answers: Array(questions.length).fill(null), i: 0 };
   }
@@ -851,19 +876,19 @@ function drawQuestion(view) {
   const q = quiz.questions[quiz.i];
   const total = quiz.questions.length;
   view.innerHTML = `
-    <nav class="crumbs"><a href="#/s/${quiz.sid}">${s.name}</a> › <a href="#/s/${quiz.sid}/${quiz.grade}">${quiz.grade} класс</a> › <a href="#/t/${quiz.sid}/${quiz.grade}/${quiz.tid}">${esc(quiz.topic.title)}</a></nav>
-    ${modHead(s.emoji, esc(quiz.topic.title), `Уровень: ${lv.name}`, `#/t/${quiz.sid}/${quiz.grade}/${quiz.tid}`)}
+    <nav class="crumbs"><a href="#/s/${quiz.sid}">${subjectName(s)}</a> › <a href="#/s/${quiz.sid}/${quiz.grade}">${tr("{g} класс", { g: quiz.grade })}</a> › <a href="#/t/${quiz.sid}/${quiz.grade}/${quiz.tid}">${esc(topicTitle(quiz.topic))}</a></nav>
+    ${modHead(s.emoji, esc(topicTitle(quiz.topic)), tr("Уровень: {l}", { l: levelName(lv) }), `#/t/${quiz.sid}/${quiz.grade}/${quiz.tid}`)}
     <section class="card question">
-      <div class="q-top"><span>Вопрос ${quiz.i + 1} из ${total}</span><span>${quiz.answers.filter(a => a !== null).length} отвечено</span></div>
+      <div class="q-top"><span>${tr("Вопрос {i} из {n}", { i: quiz.i + 1, n: total })}</span><span>${tr("{n} отвечено", { n: quiz.answers.filter(a => a !== null).length })}</span></div>
       <div class="progress"><i style="width:${(quiz.i / total) * 100}%"></i></div>
-      <h2>${esc(q.q)}</h2>
+      <h2>${esc(qText(q))}${noKzTag(q, "q")}</h2>
       ${q.code ? codeBlock(q.code) : ""}
       <div class="options">
-        ${q.o.map((opt, k) => `<button class="option ${q.code ? "mono" : ""} ${quiz.answers[quiz.i] === k ? "picked" : ""}" data-k="${k}">${esc(opt)}</button>`).join("")}
+        ${qOpts(q).map((opt, k) => `<button class="option ${q.code ? "mono" : ""} ${quiz.answers[quiz.i] === k ? "picked" : ""}" data-k="${k}">${esc(opt)}</button>`).join("")}
       </div>
       <div class="row between" style="margin-top:16px">
-        <button class="btn btn-ghost" id="prevQ" ${quiz.i === 0 ? "disabled" : ""}>← Назад</button>
-        <button class="btn btn-primary" id="nextQ" ${quiz.answers[quiz.i] === null ? "disabled" : ""}>${quiz.i === total - 1 ? "Завершить тест" : "Далее →"}</button>
+        <button class="btn btn-ghost" id="prevQ" ${quiz.i === 0 ? "disabled" : ""}>${tr("← Назад")}</button>
+        <button class="btn btn-primary" id="nextQ" ${quiz.answers[quiz.i] === null ? "disabled" : ""}>${quiz.i === total - 1 ? tr("Завершить тест") : tr("Далее →")}</button>
       </div>
     </section>`;
   $$(".option", view).forEach(b => b.onclick = () => { quiz.answers[quiz.i] = +b.dataset.k; drawQuestion(view); });
@@ -885,43 +910,43 @@ function drawResult(view) {
   const total = quiz.questions.length;
   const pct = quiz.percent;
   const color = pct >= 80 ? "var(--ok)" : pct >= 50 ? "var(--warn)" : "var(--danger)";
-  const msg = pct >= 80 ? "Отличный результат! 🔥" : pct >= PASS ? "Тест сдан! Можно попробовать уровень сложнее 💪" : pct >= 50 ? "Почти! Разберём ошибки и попробуем снова 💪" : "Не страшно — разберём ошибки вместе 🌱";
+  const msg = tr(pct >= 80 ? "Отличный результат! 🔥" : pct >= PASS ? "Тест сдан! Можно попробовать уровень сложнее 💪" : pct >= 50 ? "Почти! Разберём ошибки и попробуем снова 💪" : "Не страшно — разберём ошибки вместе 🌱");
   const mistakes = quiz.questions.map((q, i) => ({ q, i, picked: quiz.answers[i] })).filter(x => x.picked !== x.q.a);
   const nextLevel = LEVELS[LEVELS.findIndex(l => l.id === quiz.level) + 1];
 
   view.innerHTML = `
-    <nav class="crumbs"><a href="#/s/${quiz.sid}">${s.name}</a> › <a href="#/s/${quiz.sid}/${quiz.grade}">${quiz.grade} класс</a> › <a href="#/t/${quiz.sid}/${quiz.grade}/${quiz.tid}">${esc(quiz.topic.title)}</a></nav>
-    ${modHead(s.emoji, "Результат", `${esc(quiz.topic.title)} · ${lv.name}`, `#/t/${quiz.sid}/${quiz.grade}/${quiz.tid}`)}
+    <nav class="crumbs"><a href="#/s/${quiz.sid}">${subjectName(s)}</a> › <a href="#/s/${quiz.sid}/${quiz.grade}">${tr("{g} класс", { g: quiz.grade })}</a> › <a href="#/t/${quiz.sid}/${quiz.grade}/${quiz.tid}">${esc(topicTitle(quiz.topic))}</a></nav>
+    ${modHead(s.emoji, tr("Результат"), `${esc(topicTitle(quiz.topic))} · ${levelName(lv)}`, `#/t/${quiz.sid}/${quiz.grade}/${quiz.tid}`)}
     <section class="card result-top">
       <div class="ring" style="--p:${pct}; --ring-c:${color}"><div>${pct}%</div></div>
       <div>
-        <h2 style="margin-bottom:4px">${quiz.score} из ${total} правильно</h2>
+        <h2 style="margin-bottom:4px">${tr("{s} из {n} правильно", { s: quiz.score, n: total })}</h2>
         <p class="muted">${msg}</p>
         <div class="row">
-          <button class="btn btn-primary" id="retry">↻ Ещё раз</button>
-          ${nextLevel && pct >= PASS ? `<a class="btn btn-soft" href="#/q/${quiz.sid}/${quiz.grade}/${quiz.tid}/${nextLevel.id}">Уровень «${nextLevel.name}» →</a>` : ""}
-          <a class="btn" href="#/s/${quiz.sid}/${quiz.grade}">К темам класса</a>
+          <button class="btn btn-primary" id="retry">${tr("↻ Ещё раз")}</button>
+          ${nextLevel && pct >= PASS ? `<a class="btn btn-soft" href="#/q/${quiz.sid}/${quiz.grade}/${quiz.tid}/${nextLevel.id}">${tr("Уровень «{l}» →", { l: levelName(nextLevel) })}</a>` : ""}
+          <a class="btn" href="#/s/${quiz.sid}/${quiz.grade}">${tr("К темам класса")}</a>
         </div>
       </div>
     </section>
     <section class="card">
-      <h3>${mistakes.length ? `❌ Ошибки (${mistakes.length})` : "🏆 Без ошибок!"}</h3>
+      <h3>${mistakes.length ? tr("❌ Ошибки ({n})", { n: mistakes.length }) : tr("🏆 Без ошибок!")}</h3>
       ${mistakes.length ? mistakes.map(m => `
         <div class="mistake">
-          <p><b>${esc(m.q.q)}</b></p>
+          <p><b>${esc(qText(m.q))}</b></p>
           ${m.q.code ? codeBlock(m.q.code) : ""}
-          <p class="bad">Твой ответ: ${esc(m.q.o[m.picked])}</p>
-          <p class="good">Правильно: ${esc(m.q.o[m.q.a])}</p>
-          <button class="btn btn-sm btn-soft explain-btn" data-explain="${m.i}">🤖 Объясни</button>
+          <p class="bad">${tr("Твой ответ:")} ${esc(qOpts(m.q)[m.picked])}</p>
+          <p class="good">${tr("Правильно:")} ${esc(qOpts(m.q)[m.q.a])}</p>
+          <button class="btn btn-sm btn-soft explain-btn" data-explain="${m.i}">${tr("🤖 Объясни")}</button>
         </div>`).join("")
-      : `<p class="muted">Все ответы верные. Попробуй уровень сложнее!</p>`}
+      : `<p class="muted">${tr("Все ответы верные. Попробуй уровень сложнее!")}</p>`}
     </section>`;
 
   $("#retry", view).onclick = () => { quiz = null; router(); };
   $$("[data-explain]", view).forEach(b => b.onclick = () => {
     const i = +b.dataset.explain;
     const q = quiz.questions[i];
-    openNovaAI({ ...q, picked: q.o[quiz.answers[i]] });
+    openNovaAI({ ...q, picked: qOpts(q)[quiz.answers[i]] });
   });
 }
 
@@ -937,7 +962,7 @@ function renderWeakPoint(view) {
     const [sid, grade, tid] = key.split("|");
     const right = Object.values(p.levels).reduce((a, l) => a + l.right, 0);
     const total = Object.values(p.levels).reduce((a, l) => a + l.total, 0);
-    return { sid, grade, tid, title: p.title, acc: total ? Math.round(right / total * 100) : 0, total, done: p.done };
+    return { sid, grade, tid, title: isKz() && p.title_kz ? p.title_kz : p.title, acc: total ? Math.round(right / total * 100) : 0, total, done: p.done };
   });
   const weak = rows.filter(r => r.acc < PASS && (!weakFilter || r.sid === weakFilter)).sort((a, b) => a.acc - b.acc);
   const strong = rows.filter(r => r.acc >= 85 && (!weakFilter || r.sid === weakFilter)).sort((a, b) => b.acc - a.acc).slice(0, 5);
@@ -945,34 +970,34 @@ function renderWeakPoint(view) {
   const avg = hist.length ? Math.round(hist.reduce((s, h) => s + h.percent, 0) / hist.length) : null;
 
   view.innerHTML = `
-    ${modHead("🧠", "WeakPoint", "Темы, которые проседают по результатам твоих тестов")}
-    ${!rows.length ? emptyState("🎯", "Пока нечего анализировать", `Пройди хотя бы один тест по любой теме — здесь появятся слабые места.<br><br><a class="btn btn-primary" href="#/">Выбрать предмет</a>`) : `
+    ${modHead("🧠", "WeakPoint", tr("Темы, которые проседают по результатам твоих тестов"))}
+    ${!rows.length ? emptyState("🎯", tr("Пока нечего анализировать"), `${tr("Пройди хотя бы один тест по любой теме — здесь появятся слабые места.")}<br><br><a class="btn btn-primary" href="#/">${tr("Выбрать предмет")}</a>`) : `
     <section class="stats" style="margin-top:0">
-      <div class="stat"><b>${avg}%</b><span>средний результат</span></div>
-      <div class="stat"><b>${hist.length}</b><span>${plural(hist.length, "тест пройден", "теста пройдено", "тестов пройдено")}</span></div>
-      <div class="stat"><b>${rows.filter(r => r.done).length}</b><span>тем сдано</span></div>
-      <div class="stat"><b>${rows.filter(r => r.acc < PASS).length}</b><span>слабых тем</span></div>
+      <div class="stat"><b>${avg}%</b><span>${tr("средний результат")}</span></div>
+      <div class="stat"><b>${hist.length}</b><span>${tr(plural(hist.length, "тест пройден", "теста пройдено", "тестов пройдено"))}</span></div>
+      <div class="stat"><b>${rows.filter(r => r.done).length}</b><span>${tr("тем сдано")}</span></div>
+      <div class="stat"><b>${rows.filter(r => r.acc < PASS).length}</b><span>${tr("слабых тем")}</span></div>
     </section>
     ${usedSubjects.length > 1 ? `<div class="chips" style="margin-bottom:14px">
-      <button class="chip ${!weakFilter ? "active" : ""}" data-f="">Все предметы</button>
-      ${usedSubjects.map(s => `<button class="chip ${weakFilter === s.id ? "active" : ""}" data-f="${s.id}">${s.emoji} ${s.name}</button>`).join("")}
+      <button class="chip ${!weakFilter ? "active" : ""}" data-f="">${tr("Все предметы")}</button>
+      ${usedSubjects.map(s => `<button class="chip ${weakFilter === s.id ? "active" : ""}" data-f="${s.id}">${s.emoji} ${subjectName(s)}</button>`).join("")}
     </div>` : ""}
     <div class="two-col">
       <section class="card">
-        <h3>📉 Что повторить</h3>
+        <h3>${tr("📉 Что повторить")}</h3>
         ${weak.length ? weak.map(r => {
           const s = subjectById(r.sid);
           return `<a class="weak" href="#/t/${r.sid}/${r.grade}/${r.tid}">
-            <div><b>${esc(r.title)}</b><small>${s.emoji} ${s.name} · ${r.grade} класс · ответов: ${r.total}</small></div>
+            <div><b>${esc(r.title)}</b><small>${s.emoji} ${subjectName(s)} · ${tr("{g} класс · ответов: {n}", { g: r.grade, n: r.total })}</small></div>
             <span class="pct ${pctClass(r.acc)}">${r.acc}%</span></a>`;
-        }).join("") : `<p class="muted">Слабых тем нет — все пройденные темы выше ${PASS}%. Так держать! 🎉</p>`}
-        <p class="small muted">Процент — доля верных ответов по теме за все попытки и уровни. Нажми на тему, чтобы повторить объяснение и пройти тест снова.</p>
+        }).join("") : `<p class="muted">${tr("Слабых тем нет — все пройденные темы выше {p}%. Так держать! 🎉", { p: PASS })}</p>`}
+        <p class="small muted">${tr("Процент — доля верных ответов по теме за все попытки и уровни. Нажми на тему, чтобы повторить объяснение и пройти тест снова.")}</p>
       </section>
       <section class="card">
-        <h3>💪 Сильные темы</h3>
-        ${strong.length ? strong.map(r => `<div class="hist-item"><span>${subjectById(r.sid).emoji} ${esc(r.title)}</span><span class="pct good">${r.acc}%</span></div>`).join("") : `<p class="muted">Здесь появятся темы, где ты отвечаешь верно на 85% и больше.</p>`}
-        <h3 style="margin-top:18px">🕑 Последние тесты</h3>
-        ${hist.slice(0, 8).map(h => `<div class="hist-item"><div><b>${esc(h.title)}</b><br><span class="small muted">${subjectById(h.sid)?.emoji || ""} ${h.grade} кл · ${levelById(h.level)?.name} · ${fmtDate(h.date)}</span></div><span class="pct ${pctClass(h.percent)}">${h.percent}%</span></div>`).join("")}
+        <h3>${tr("💪 Сильные темы")}</h3>
+        ${strong.length ? strong.map(r => `<div class="hist-item"><span>${subjectById(r.sid).emoji} ${esc(r.title)}</span><span class="pct good">${r.acc}%</span></div>`).join("") : `<p class="muted">${tr("Здесь появятся темы, где ты отвечаешь верно на 85% и больше.")}</p>`}
+        <h3 style="margin-top:18px">${tr("🕑 Последние тесты")}</h3>
+        ${hist.slice(0, 8).map(h => `<div class="hist-item"><div><b>${esc(isKz() && h.title_kz ? h.title_kz : h.title)}</b><br><span class="small muted">${subjectById(h.sid)?.emoji || ""} ${tr("{g} кл", { g: h.grade })} · ${levelById(h.level) ? levelName(levelById(h.level)) : ""} · ${fmtDate(h.date)}</span></div><span class="pct ${pctClass(h.percent)}">${h.percent}%</span></div>`).join("")}
       </section>
     </div>`}`;
   $$("[data-f]", view).forEach(b => b.onclick = () => { weakFilter = b.dataset.f; renderWeakPoint(view); });
@@ -983,16 +1008,22 @@ function renderWeakPoint(view) {
    ===================================================================== */
 function renderSettings(view) {
   view.innerHTML = `
-    ${modHead("⚙️", "Настройки", "Данные в этом браузере")}
+    ${modHead("⚙️", tr("Настройки"), tr("Данные в этом браузере"))}
     <section class="card">
-      <h3>🗂️ Данные</h3>
-      <p class="small muted">Прогресс, история тестов, задачи и команда хранятся только в этом браузере. NOVA не использует платные сервисы и ключи.</p>
-      <button class="btn btn-ghost btn-danger" id="resetProgress">Сбросить прогресс и историю тестов</button>
+      <h3>${tr("🌐 Язык")}</h3>
+      <div class="seg">${Object.entries(LANGS).map(([k, v]) => `<button type="button" class="${getLang() === k ? "active" : ""}" data-setlang="${k}">${v}</button>`).join("")}</div>
+      <p class="small muted" style="margin-top:10px">${tr("Язык интерфейса и учебных материалов. Казахский перевод проверяется носителями языка; где его ещё нет, показан русский текст с пометкой «аудармасы жоқ».")}</p>
+    </section>
+    <section class="card">
+      <h3>${tr("🗂️ Данные")}</h3>
+      <p class="small muted">${tr("Прогресс, история тестов, задачи и команда хранятся только в этом браузере. NOVA не использует платные сервисы и ключи.")}</p>
+      <button class="btn btn-ghost btn-danger" id="resetProgress">${tr("Сбросить прогресс и историю тестов")}</button>
     </section>`;
+  $$("[data-setlang]", view).forEach(b => b.onclick = () => setLang(b.dataset.setlang));
   $("#resetProgress", view).onclick = () => {
-    if (!confirm("Удалить весь прогресс по темам и историю тестов?")) return;
+    if (!confirm(tr("Удалить весь прогресс по темам и историю тестов?"))) return;
     store.set("progress", {}); store.set("history", []);
-    toast("Прогресс сброшен");
+    toast(tr("Прогресс сброшен"));
   };
 }
 
@@ -1093,27 +1124,30 @@ const AVATAR_COLORS = ["#8b7bff", "#5ee7df", "#ffb347", "#ff5c7a", "#3ddc97", "#
 /* =====================================================================
    13. МОДУЛЬ HOMETRY
    ===================================================================== */
+/** Тема HomeTry на выбранном языке. */
+const htLoc = t => (isKz() && HT_KZ[t.id] ? { ...t, ...HT_KZ[t.id] } : t);
+
 function renderHomeTry(view, topicId) {
   if (topicId) return renderHomeTryTopic(view, topicId);
   view.innerHTML = `
-    ${modHead("🔍", "HomeTry", "Сложные темы — через вещи, которые есть у тебя дома")}
+    ${modHead("🔍", "HomeTry", tr("Сложные темы — через вещи, которые есть у тебя дома"))}
     <label class="field">
-      <span>Поиск по темам</span>
-      <input type="search" id="htSearch" placeholder="Например: давление, дроби, свет…" autocomplete="off">
+      <span>${tr("Поиск по темам")}</span>
+      <input type="search" id="htSearch" placeholder="${tr("Например: давление, дроби, свет…")}" autocomplete="off">
     </label>
     <div class="ht-grid" id="htList"></div>`;
 
   const list = $("#htList", view);
   const draw = query => {
     const q = query.trim().toLowerCase();
-    const found = HT_TOPICS.filter(t => !q || [t.title, t.subject, t.short, t.explain, ...t.need, ...t.items.map(i => i[1])].join(" ").toLowerCase().includes(q));
+    const found = HT_TOPICS.map(htLoc).filter(t => !q || [t.title, t.subject, t.short, t.explain, ...t.need, ...t.items.map(i => i[1])].join(" ").toLowerCase().includes(q));
     list.innerHTML = found.length
       ? found.map(t => `
           <button class="ht-card" data-topic="${t.id}">
             <span class="ht-emoji">${t.emoji}</span>
             <span><b>${esc(t.title)}</b><p>${esc(t.short)}</p><span class="chip">${esc(t.subject)}</span></span>
           </button>`).join("")
-      : emptyState("🔎", "Ничего не нашлось", "Попробуй другое слово: «ток», «свет», «части», «вода».");
+      : emptyState("🔎", tr("Ничего не нашлось"), tr("Попробуй другое слово: «ток», «свет», «части», «вода»."));
     $$("[data-topic]", list).forEach(b => b.onclick = () => { location.hash = "#/hometry/" + b.dataset.topic; });
   };
   $("#htSearch", view).oninput = e => draw(e.target.value);
@@ -1121,29 +1155,30 @@ function renderHomeTry(view, topicId) {
 }
 
 function renderHomeTryTopic(view, id) {
-  const t = HT_TOPICS.find(x => x.id === id);
-  if (!t) { location.hash = "#/hometry"; return; }
+  const raw = HT_TOPICS.find(x => x.id === id);
+  if (!raw) { location.hash = "#/hometry"; return; }
+  const t = htLoc(raw);
   view.innerHTML = `
-    ${modHead(t.emoji, esc(t.title), esc(t.subject) + " · объяснение через предметы", "#/hometry")}
+    ${modHead(t.emoji, esc(t.title), tr("{s} · объяснение через предметы", { s: esc(t.subject) }), "#/hometry")}
     <section class="card">
-      <h3>🧩 Простыми словами</h3>
+      <h3>${tr("🧩 Простыми словами")}</h3>
       <p class="explain">${esc(t.explain)}</p>
       <div class="items">${t.items.map(([e, txt]) => `<div class="item"><span>${e}</span><span>${esc(txt)}</span></div>`).join("")}</div>
     </section>
     <div class="two-col">
       <section class="card">
-        <h3>🧪 Опыт дома</h3>
-        <p class="small muted" style="margin-bottom:6px">Что понадобится:</p>
+        <h3>${tr("🧪 Опыт дома")}</h3>
+        <p class="small muted" style="margin-bottom:6px">${tr("Что понадобится:")}</p>
         <ul class="need">${t.need.map(n => `<li class="chip on">${esc(n)}</li>`).join("")}</ul>
-        <p class="small muted" style="margin:16px 0 10px">Шаги:</p>
+        <p class="small muted" style="margin:16px 0 10px">${tr("Шаги:")}</p>
         <ol class="steps">${t.steps.map(s => `<li>${esc(s)}</li>`).join("")}</ol>
         ${t.safety ? `<p class="safety">⚠️ ${esc(t.safety)}</p>` : ""}
       </section>
       <section class="card">
-        <h3>✅ Вывод</h3>
+        <h3>${tr("✅ Вывод")}</h3>
         <div class="conclusion">${esc(t.conclusion)}</div>
-        <p class="small muted" style="margin-top:14px">Хочешь проверить знания? Пройди тест по теме.</p>
-        <a class="btn btn-block" href="#/s/physics">⚡ Темы по физике</a>
+        <p class="small muted" style="margin-top:14px">${tr("Хочешь проверить знания? Пройди тест по теме.")}</p>
+        <a class="btn btn-block" href="#/s/physics">${tr("⚡ Темы по физике")}</a>
       </section>
     </div>`;
 }
@@ -1166,13 +1201,13 @@ function deadlineStatus(task) {
 }
 
 function deadlineLabel(task) {
-  if (!task.deadline) return "без дедлайна";
+  if (!task.deadline) return tr("без дедлайна");
   const st = deadlineStatus(task);
   const when = fmtDate(task.deadline);
-  if (st === "overdue") return "⛔ просрочено · " + when;
+  if (st === "overdue") return tr("⛔ просрочено · {w}", { w: when });
   if (st === "urgent") {
     const h = Math.max(1, Math.round((new Date(task.deadline) - Date.now()) / 3600000));
-    return `🔥 через ${h} ч · ${when}`;
+    return tr("🔥 через {h} ч · {w}", { h, w: when });
   }
   return "⏰ " + when;
 }
@@ -1184,43 +1219,43 @@ function renderTasks(view) {
   const percent = tasks.length ? Math.round(doneCount / tasks.length * 100) : 0;
 
   view.innerHTML = `
-    ${modHead("📅", "TaskPlanner", "Задания, дедлайны и приоритеты")}
+    ${modHead("📅", "TaskPlanner", tr("Задания, дедлайны и приоритеты"))}
     <div class="two-col">
       <section class="card">
-        <h3>${editing ? "✏️ Редактировать задачу" : "➕ Новая задача"}</h3>
+        <h3>${editing ? tr("✏️ Редактировать задачу") : tr("➕ Новая задача")}</h3>
         <form id="taskForm" autocomplete="off">
-          <label class="field"><span>Название *</span><input type="text" name="title" required maxlength="120" placeholder="Например: Реферат по истории" value="${esc(editing?.title)}"></label>
+          <label class="field"><span>${tr("Название *")}</span><input type="text" name="title" required maxlength="120" placeholder="${tr("Например: Реферат по истории")}" value="${esc(editing?.title)}"></label>
           <div class="form-grid">
-            <label class="field"><span>Предмет</span><input type="text" name="subject" maxlength="40" placeholder="История" value="${esc(editing?.subject)}" list="subjList"></label>
-            <label class="field"><span>Приоритет</span>
-              <select name="priority">${Object.entries(PRIORITY).map(([k, v]) => `<option value="${k}" ${(editing?.priority || "medium") === k ? "selected" : ""}>${v}</option>`).join("")}</select>
+            <label class="field"><span>${tr("Предмет")}</span><input type="text" name="subject" maxlength="40" placeholder="${tr("История")}" value="${esc(editing?.subject)}" list="subjList"></label>
+            <label class="field"><span>${tr("Приоритет")}</span>
+              <select name="priority">${Object.entries(PRIORITY).map(([k, v]) => `<option value="${k}" ${(editing?.priority || "medium") === k ? "selected" : ""}>${tr(v)}</option>`).join("")}</select>
             </label>
           </div>
-          <label class="field"><span>Дедлайн</span><input type="datetime-local" name="deadline" value="${esc(editing?.deadline)}"></label>
-          <datalist id="subjList">${["Математика", "Физика", "История", "Английский", "Химия", "Биология", "Литература", "Информатика"].map(s => `<option value="${s}">`).join("")}</datalist>
+          <label class="field"><span>${tr("Дедлайн")}</span><input type="datetime-local" name="deadline" value="${esc(editing?.deadline)}"></label>
+          <datalist id="subjList">${["Математика", "Физика", "История", "Английский", "Химия", "Биология", "Литература", "Информатика"].map(s => `<option value="${tr(s)}">`).join("")}</datalist>
           <div class="row">
-            <button class="btn btn-primary" type="submit">${editing ? "Сохранить" : "Добавить задачу"}</button>
-            ${editing ? `<button class="btn btn-ghost" type="button" id="cancelEdit">Отмена</button>` : ""}
+            <button class="btn btn-primary" type="submit">${editing ? tr("Сохранить") : tr("Добавить задачу")}</button>
+            ${editing ? `<button class="btn btn-ghost" type="button" id="cancelEdit">${tr("Отмена")}</button>` : ""}
           </div>
         </form>
       </section>
 
       <section class="card">
-        <div class="row between"><h3 style="margin:0">📈 Прогресс</h3><b>${doneCount} из ${tasks.length}</b></div>
+        <div class="row between"><h3 style="margin:0">${tr("📈 Прогресс")}</h3><b>${tr("{d} из {n}", { d: doneCount, n: tasks.length })}</b></div>
         <div class="progress" style="margin:12px 0 8px"><i style="width:${percent}%"></i></div>
-        <p class="small muted">${tasks.length ? `Выполнено ${percent}% · активных: ${tasks.length - doneCount}` : "Добавь задачи, чтобы видеть прогресс."}</p>
+        <p class="small muted">${tasks.length ? tr("Выполнено {p}% · активных: {n}", { p: percent, n: tasks.length - doneCount }) : tr("Добавь задачи, чтобы видеть прогресс.")}</p>
         <div class="row small" style="gap:6px">
-          <span class="chip deadline overdue">⛔ просрочено</span>
-          <span class="chip deadline urgent">🔥 меньше суток</span>
+          <span class="chip deadline overdue">${tr("⛔ просрочено")}</span>
+          <span class="chip deadline urgent">${tr("🔥 меньше суток")}</span>
         </div>
       </section>
     </div>
 
     <div class="row between" style="margin:4px 0 14px">
-      <div class="seg" role="tablist" aria-label="Фильтр задач">
-        ${[["all", "Все"], ["active", "Активные"], ["done", "Выполненные"]].map(([k, v]) => `<button data-filter="${k}" class="${taskFilter === k ? "active" : ""}">${v}</button>`).join("")}
+      <div class="seg" role="tablist" aria-label="${tr("Фильтр задач")}">
+        ${[["all", "Все"], ["active", "Активные"], ["done", "Выполненные"]].map(([k, v]) => `<button data-filter="${k}" class="${taskFilter === k ? "active" : ""}">${tr(v)}</button>`).join("")}
       </div>
-      <span class="small muted">Сортировка: по дедлайну</span>
+      <span class="small muted">${tr("Сортировка: по дедлайну")}</span>
     </div>
     <div id="taskList"></div>`;
 
@@ -1236,26 +1271,26 @@ function renderTasks(view) {
 
   const box = $("#taskList", view);
   if (!tasks.length) {
-    box.innerHTML = emptyState("🗒️", "Задач пока нет", "Заполни форму выше: название, предмет, дедлайн и приоритет.");
+    box.innerHTML = emptyState("🗒️", tr("Задач пока нет"), tr("Заполни форму выше: название, предмет, дедлайн и приоритет."));
   } else if (!list.length) {
-    box.innerHTML = emptyState(taskFilter === "done" ? "⏳" : "🎉", taskFilter === "done" ? "Выполненных задач пока нет" : "Все задачи выполнены!", taskFilter === "done" ? "Отметь задачу галочкой, когда закончишь её." : "Отличная работа. Добавь новую задачу, когда понадобится.");
+    box.innerHTML = emptyState(taskFilter === "done" ? "⏳" : "🎉", tr(taskFilter === "done" ? "Выполненных задач пока нет" : "Все задачи выполнены!"), tr(taskFilter === "done" ? "Отметь задачу галочкой, когда закончишь её." : "Отличная работа. Добавь новую задачу, когда понадобится."));
   } else {
     box.innerHTML = list.map(t => {
       const st = deadlineStatus(t);
       return `
         <article class="task ${t.done ? "done" : ""} ${st}">
-          <button class="check" data-toggle="${t.id}" aria-label="${t.done ? "Вернуть в активные" : "Отметить выполненной"}">${t.done ? "✓" : ""}</button>
+          <button class="check" data-toggle="${t.id}" aria-label="${tr(t.done ? "Вернуть в активные" : "Отметить выполненной")}">${t.done ? "✓" : ""}</button>
           <div class="t-body">
             <div class="t-title">${esc(t.title)}</div>
             <div class="t-meta">
               ${t.subject ? `<span class="chip">📚 ${esc(t.subject)}</span>` : ""}
-              <span class="chip prio-${t.priority}">● ${PRIORITY[t.priority]}</span>
+              <span class="chip prio-${t.priority}">● ${tr(PRIORITY[t.priority])}</span>
               <span class="chip deadline ${st}">${deadlineLabel(t)}</span>
             </div>
           </div>
           <div class="t-actions">
-            <button class="icon-btn" data-edit="${t.id}" aria-label="Редактировать">✏️</button>
-            <button class="icon-btn" data-del="${t.id}" aria-label="Удалить">🗑️</button>
+            <button class="icon-btn" data-edit="${t.id}" aria-label="${tr("Редактировать")}">✏️</button>
+            <button class="icon-btn" data-del="${t.id}" aria-label="${tr("Удалить")}">🗑️</button>
           </div>
         </article>`;
     }).join("");
@@ -1271,14 +1306,14 @@ function renderTasks(view) {
       priority: f.get("priority"),
       deadline: f.get("deadline")
     };
-    if (!data.title) return toast("Введи название задачи");
+    if (!data.title) return toast(tr("Введи название задачи"));
     let all = store.get("tasks", []);
     if (editingTaskId) {
       all = all.map(t => t.id === editingTaskId ? { ...t, ...data } : t);
-      toast("Задача обновлена ✓");
+      toast(tr("Задача обновлена ✓"));
     } else {
       all.push({ id: uid(), done: false, created: new Date().toISOString(), ...data });
-      toast("Задача добавлена ✓");
+      toast(tr("Задача добавлена ✓"));
     }
     editingTaskId = null;
     store.set("tasks", all);
@@ -1294,10 +1329,10 @@ function renderTasks(view) {
   });
   $$("[data-edit]", view).forEach(b => b.onclick = () => { editingTaskId = b.dataset.edit; renderTasks(view); window.scrollTo({ top: 0, behavior: "smooth" }); });
   $$("[data-del]", view).forEach(b => b.onclick = () => {
-    if (!confirm("Удалить задачу?")) return;
+    if (!confirm(tr("Удалить задачу?"))) return;
     if (editingTaskId === b.dataset.del) editingTaskId = null;
     store.set("tasks", store.get("tasks", []).filter(t => t.id !== b.dataset.del));
-    toast("Задача удалена");
+    toast(tr("Задача удалена"));
     renderTasks(view);
   });
 }
@@ -1312,7 +1347,8 @@ let teamSkill = "";
 /** Все анкеты: моя (если есть) + демо. */
 function allPeople() {
   const mine = store.get("myProfile", null);
-  return mine ? [{ ...mine, mine: true }, ...DEMO_PEOPLE] : DEMO_PEOPLE;
+  const demo = DEMO_PEOPLE.map(p => (isKz() && PEOPLE_KZ[p.id] ? { ...p, ...PEOPLE_KZ[p.id] } : p));
+  return mine ? [{ ...mine, mine: true }, ...demo] : demo;
 }
 
 function avatar(person, i) {
@@ -1324,13 +1360,13 @@ function personCard(p, i, team) {
   const inTeam = team.includes(p.id);
   return `
     <article class="person ${p.mine ? "mine" : ""}">
-      <div class="p-head">${avatar(p, i)}<div><b>${esc(p.name)}</b><small>${p.mine ? "Это ты" : esc(p.skills.slice(0, 2).join(" · "))}</small></div></div>
+      <div class="p-head">${avatar(p, i)}<div><b>${esc(p.name)}</b><small>${p.mine ? tr("Это ты") : esc(p.skills.slice(0, 2).join(" · "))}</small></div></div>
       <div class="chips">${p.skills.map(s => `<span class="chip">${esc(s)}</span>`).join("")}</div>
-      <p><span class="label">Интересы:</span> ${esc(p.interests)}</p>
-      <p><span class="label">Ищу:</span> ${esc(p.looking)}</p>
+      <p><span class="label">${tr("Интересы:")}</span> ${esc(p.interests)}</p>
+      <p><span class="label">${tr("Ищу:")}</span> ${esc(p.looking)}</p>
       ${p.mine
-        ? `<button class="btn btn-sm" data-tab="profile">✏️ Редактировать анкету</button>`
-        : `<button class="btn btn-sm ${inTeam ? "in-team" : "btn-primary"}" data-join="${p.id}">${inTeam ? "✓ В команде" : "🤝 Хочу в команду"}</button>`}
+        ? `<button class="btn btn-sm" data-tab="profile">${tr("✏️ Редактировать анкету")}</button>`
+        : `<button class="btn btn-sm ${inTeam ? "in-team" : "btn-primary"}" data-join="${p.id}">${inTeam ? tr("✓ В команде") : tr("🤝 Хочу в команду")}</button>`}
     </article>`;
 }
 
@@ -1341,49 +1377,49 @@ function renderTeam(view) {
 
   let body = "";
   if (teamTab === "feed") {
-    const skills = [...new Set(people.flatMap(p => p.skills))].sort((a, b) => a.localeCompare(b, "ru"));
+    const skills = [...new Set(people.flatMap(p => p.skills))].sort((a, b) => a.localeCompare(b, locale()));
     const q = teamQuery.trim().toLowerCase();
     const list = people.filter(p =>
       (!teamSkill || p.skills.includes(teamSkill)) &&
       (!q || [p.name, p.interests, p.looking, ...p.skills].join(" ").toLowerCase().includes(q)));
     body = `
-      <label class="field"><span>Поиск</span><input type="search" id="teamSearch" placeholder="Имя, интерес или навык…" value="${esc(teamQuery)}" autocomplete="off"></label>
+      <label class="field"><span>${tr("Поиск")}</span><input type="search" id="teamSearch" placeholder="${tr("Имя, интерес или навык…")}" value="${esc(teamQuery)}" autocomplete="off"></label>
       <div class="chips" style="margin-bottom:16px">
-        <button class="chip ${!teamSkill ? "active" : ""}" data-skill="">Все навыки</button>
+        <button class="chip ${!teamSkill ? "active" : ""}" data-skill="">${tr("Все навыки")}</button>
         ${skills.map(s => `<button class="chip ${teamSkill === s ? "active" : ""}" data-skill="${esc(s)}">${esc(s)}</button>`).join("")}
       </div>
       ${list.length
         ? `<div class="people">${list.map((p, i) => personCard(p, people.indexOf(p), team)).join("")}</div>`
-        : emptyState("🔍", "Никого не нашли", "Измени запрос или выбери «Все навыки».")}`;
+        : emptyState("🔍", tr("Никого не нашли"), tr("Измени запрос или выбери «Все навыки»."))}`;
   } else if (teamTab === "team") {
     const members = people.filter(p => team.includes(p.id));
     body = members.length
       ? `<div class="people">${members.map(p => personCard(p, people.indexOf(p), team)).join("")}</div>`
-      : emptyState("🤝", "В твоей команде пока никого", "Открой «Ленту анкет» и нажми «Хочу в команду» у тех, с кем хочешь работать.");
+      : emptyState("🤝", tr("В твоей команде пока никого"), tr("Открой «Ленту анкет» и нажми «Хочу в команду» у тех, с кем хочешь работать."));
   } else {
     body = `
       <section class="card">
-        <h3>${mine ? "✏️ Моя анкета" : "📝 Создай анкету"}</h3>
-        <p class="small muted">Анкета появится в ленте, и другие увидят, чем ты можешь помочь.</p>
+        <h3>${mine ? tr("✏️ Моя анкета") : tr("📝 Создай анкету")}</h3>
+        <p class="small muted">${tr("Анкета появится в ленте, и другие увидят, чем ты можешь помочь.")}</p>
         <form id="profileForm" autocomplete="off">
-          <label class="field"><span>Имя *</span><input type="text" name="name" required maxlength="40" value="${esc(mine?.name)}" placeholder="Как тебя зовут"></label>
-          <label class="field"><span>Навыки * (через запятую)</span><input type="text" name="skills" required maxlength="160" value="${esc(mine?.skills.join(", "))}" placeholder="JavaScript, Дизайн, Презентации"></label>
-          <label class="field"><span>Интересы</span><textarea name="interests" maxlength="200" placeholder="Что тебе интересно">${esc(mine?.interests)}</textarea></label>
-          <label class="field"><span>Кого ищу</span><textarea name="looking" maxlength="200" placeholder="Кто нужен тебе в команду">${esc(mine?.looking)}</textarea></label>
+          <label class="field"><span>${tr("Имя *")}</span><input type="text" name="name" required maxlength="40" value="${esc(mine?.name)}" placeholder="${tr("Как тебя зовут")}"></label>
+          <label class="field"><span>${tr("Навыки * (через запятую)")}</span><input type="text" name="skills" required maxlength="160" value="${esc(mine?.skills.join(", "))}" placeholder="${tr("JavaScript, Дизайн, Презентации")}"></label>
+          <label class="field"><span>${tr("Интересы")}</span><textarea name="interests" maxlength="200" placeholder="${tr("Что тебе интересно")}">${esc(mine?.interests)}</textarea></label>
+          <label class="field"><span>${tr("Кого ищу")}</span><textarea name="looking" maxlength="200" placeholder="${tr("Кто нужен тебе в команду")}">${esc(mine?.looking)}</textarea></label>
           <div class="row">
-            <button class="btn btn-primary" type="submit">${mine ? "Сохранить" : "Опубликовать анкету"}</button>
-            ${mine ? `<button class="btn btn-ghost btn-danger" type="button" id="delProfile">Удалить анкету</button>` : ""}
+            <button class="btn btn-primary" type="submit">${mine ? tr("Сохранить") : tr("Опубликовать анкету")}</button>
+            ${mine ? `<button class="btn btn-ghost btn-danger" type="button" id="delProfile">${tr("Удалить анкету")}</button>` : ""}
           </div>
         </form>
       </section>`;
   }
 
   view.innerHTML = `
-    ${modHead("🤝", "TeamSync", "Найди людей для проекта, олимпиады или хакатона")}
+    ${modHead("🤝", "TeamSync", tr("Найди людей для проекта, олимпиады или хакатона"))}
     <div class="tabs" role="tablist">
-      <button class="${teamTab === "feed" ? "active" : ""}" data-tab="feed">Лента анкет <span>${people.length}</span></button>
-      <button class="${teamTab === "team" ? "active" : ""}" data-tab="team">Моя команда <span>${team.length}</span></button>
-      <button class="${teamTab === "profile" ? "active" : ""}" data-tab="profile">${mine ? "Моя анкета" : "+ Создать анкету"}</button>
+      <button class="${teamTab === "feed" ? "active" : ""}" data-tab="feed">${tr("Лента анкет")} <span>${people.length}</span></button>
+      <button class="${teamTab === "team" ? "active" : ""}" data-tab="team">${tr("Моя команда")} <span>${team.length}</span></button>
+      <button class="${teamTab === "profile" ? "active" : ""}" data-tab="profile">${mine ? tr("Моя анкета") : tr("+ Создать анкету")}</button>
     </div>
     ${body}`;
 
@@ -1401,8 +1437,8 @@ function renderTeam(view) {
     const id = b.dataset.join;
     const cur = store.get("team", []);
     const name = people.find(p => p.id === id)?.name;
-    if (cur.includes(id)) { store.set("team", cur.filter(x => x !== id)); toast(`${name} убран(а) из команды`); }
-    else { store.set("team", [...cur, id]); toast(`${name} добавлен(а) в команду 🤝`); }
+    if (cur.includes(id)) { store.set("team", cur.filter(x => x !== id)); toast(tr("{n} убран(а) из команды", { n: name })); }
+    else { store.set("team", [...cur, id]); toast(tr("{n} добавлен(а) в команду 🤝", { n: name })); }
     renderTeam(view);
   });
   const form = $("#profileForm", view);
@@ -1410,18 +1446,18 @@ function renderTeam(view) {
     e.preventDefault();
     const f = new FormData(form);
     const skills = f.get("skills").split(",").map(s => s.trim()).filter(Boolean);
-    if (!f.get("name").trim() || !skills.length) return toast("Заполни имя и хотя бы один навык");
+    if (!f.get("name").trim() || !skills.length) return toast(tr("Заполни имя и хотя бы один навык"));
     store.set("myProfile", {
       id: "me", name: f.get("name").trim(), skills,
       interests: f.get("interests").trim() || "—", looking: f.get("looking").trim() || "—"
     });
-    toast("Анкета сохранена ✓");
+    toast(tr("Анкета сохранена ✓"));
     teamTab = "feed";
     renderTeam(view);
   };
   const del = $("#delProfile", view);
   if (del) del.onclick = () => {
-    if (!confirm("Удалить твою анкету?")) return;
+    if (!confirm(tr("Удалить твою анкету?"))) return;
     store.set("myProfile", null);
     teamTab = "feed";
     renderTeam(view);
@@ -1434,6 +1470,7 @@ function renderTeam(view) {
    ===================================================================== */
 (async function init() {
   try { localStorage.removeItem("nova.settings"); } catch (e) {} // старый ключ API больше не используется
+  renderNav();
   try { INDEX = (await loadJson("index")) || {}; }
   catch (e) { INDEX = {}; console.warn("Нет data/index.json — запусти tools/build-data.py", e); }
   router();

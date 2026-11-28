@@ -104,12 +104,12 @@ function aiContext() {
   if (quiz) {
     if (!quiz.finished) {
       const q = quiz.questions[quiz.i];
-      c.question = { ...q, picked: quiz.answers[quiz.i] !== null ? q.o[quiz.answers[quiz.i]] : null };
+      c.question = { ...q, picked: quiz.answers[quiz.i] !== null ? (q.o ? qOpts(q)[quiz.answers[quiz.i]] : quiz.answers[quiz.i]) : null };
     }
     c.level = quiz.level;
     quiz.questions.forEach((q, i) => {
       if (quiz.answers[i] !== null && quiz.answers[i] !== q.a && (quiz.finished || i !== quiz.i)) {
-        c.mistakes.push({ q: q.q, picked: q.o[quiz.answers[i]], correct: q.o[q.a] });
+        c.mistakes.push({ q: qText(q), picked: q.o ? qOpts(q)[quiz.answers[i]] : quiz.answers[i], correct: q.o ? qOpts(q)[q.a] : q.answer });
       }
     });
   }
@@ -141,14 +141,15 @@ function systemPrompt(c) {
   if (c.topic) {
     ctx.push(`Тема: ${topicTitle(c.topic)}.`);
     ctx.push(`Объяснение темы из материалов NOVA: ${clip(topicExplain(c.topic), AI_EXPLAIN_MAX)}`);
-    if (c.topic.formula) ctx.push(`Главное по теме: ${c.topic.formula}`);
+    if (c.topic.formula) ctx.push(`Главное по теме: ${L(c.topic, "formula")}`);
   }
   const f = nai.focus || c.question;
   if (f) {
-    ctx.push(`Текущий вопрос: ${f.q}${f.code ? "\nКод:\n" + f.code : ""}`);
-    if (f.o) ctx.push(`Варианты ответа: ${f.o.join(" | ")}`);
+    ctx.push(`Текущий вопрос: ${qText(f)}${f.code ? "\nКод:\n" + f.code : ""}`);
+    if (f.o) ctx.push(`Варианты ответа: ${qOpts(f).join(" | ")}`);
     if (f.picked) ctx.push(`Ответ ученика: ${f.picked}`);
-    if (f.o && f.a !== undefined) ctx.push(`Правильный ответ (не называй его сразу, сначала подсказки): ${f.o[f.a]}. Пояснение: ${f.e || "—"}`);
+    if (f.o && f.a !== undefined) ctx.push(`Правильный ответ (не называй его сразу, сначала подсказки): ${qOpts(f)[f.a]}. Пояснение: ${qExpl(f) || "—"}`);
+    else if (f.answer !== undefined) ctx.push(`Правильный ответ (не называй его сразу, сначала подсказки): ${f.answer}. Решение: ${clip(L(f, "solution") || qExpl(f) || "—", 600)}`);
   }
   if (c.mistakes.length) ctx.push(`Ошибки ученика в этом тесте: ` + c.mistakes.slice(0, 4).map(m => `«${clip(m.q, 120)}» — ответил «${m.picked}», правильно «${m.correct}»`).join("; "));
   if (nai.similar) ctx.push(`Последняя похожая задача, которую ты дал: ${clip(nai.similar, 400)}`);
@@ -217,9 +218,9 @@ function contextCard(c) {
   const mist = c.mistakes.length && !nai.focus ? `<p class="small" style="margin-top:6px"><b>${at("mistakes")}:</b> ${c.mistakes.length}</p>` : "";
   if (!f) return mist ? `<div class="ai-ctx">${mist}</div>` : "";
   return `<div class="ai-ctx">
-    <p><b>${esc(f.q)}</b></p>${f.code ? codeBlock(f.code) : ""}
+    <p><b>${esc(qText(f))}</b></p>${f.code ? codeBlock(f.code) : ""}
     ${f.picked ? `<p style="color:var(--danger)">${at("yourAnswer")}: ${esc(f.picked)}</p>` : ""}
-    ${nai.focus && f.o ? `<p style="color:var(--ok)">${at("correct")}: ${esc(f.o[f.a])}</p>` : ""}${mist}
+    ${nai.focus && f.o ? `<p style="color:var(--ok)">${at("correct")}: ${esc(qOpts(f)[f.a])}</p>` : ""}${mist}
   </div>`;
 }
 
@@ -369,6 +370,8 @@ async function llmAnswer(kind, userText, c) {
 /* ---------------------------------------------------------------------
    Упрощённый режим: материалы NOVA + Википедия
    --------------------------------------------------------------------- */
+/** Правильный ответ вопроса: вариант (o[a]) или ответ задачи с вводом (answer). */
+const ansOf = q => (q.o ? qOpts(q)[q.a ?? 0] : q.answer);
 const sentences = (t, n) => (t || "").split(/(?<=[.!?])\s+/).slice(0, n).join(" ");
 
 async function liteAnswer(kind, userText, c) {
@@ -377,28 +380,28 @@ async function liteAnswer(kind, userText, c) {
   const typing = aiMsg("bot", `<span class="typing"><span></span><span></span><span></span></span>`, { noFoot: true });
   let html = "";
   if (kind === "why" && f) {
-    html = mdAi(`**${at("correct")}: ${f.o[f.a]}**\n\n${f.e || ""}`) + (t ? mdAi(`\n**${at("fromTopic", { t: topicTitle(t) })}:** ${sentences(topicExplain(t), 3)}`) : "");
+    html = mdAi(`**${at("correct")}: ${ansOf(f)}**\n\n${qExpl(f) || ""}`) + (t ? mdAi(`\n**${at("fromTopic", { t: topicTitle(t) })}:** ${sentences(topicExplain(t), 3)}`) : "");
   } else if (kind === "simpler") {
-    html = t ? mdAi(`**${at("liteSimpler")}** ${sentences(topicExplain(t), 2)}${f?.e ? "\n\n💡 " + f.e : ""}${t.formula ? "\n\n**" + t.formula + "**" : ""}`)
+    html = t ? mdAi(`**${at("liteSimpler")}** ${sentences(topicExplain(t), 2)}${f && qExpl(f) ? "\n\n💡 " + qExpl(f) : ""}${t.formula ? "\n\n**" + L(t, "formula") + "**" : ""}`)
              : mdAi(at("liteNoTopic")) + await wikiHtml(userText || c.subject || "");
   } else if (kind === "example") {
     const ex = t?.examples?.[0];
     const q = t && (topicLevels(t).easy || [])[0];
-    html = ex ? `<b>${at("liteExample")}: ${esc(ex.title)}</b>${codeBlock(ex.code)}<p class="small">→ ${esc(ex.out)}</p>`
-         : q ? mdAi(`**${at("liteExample")}:** ${q.q}\n**${at("answer")}:** ${q.o[q.a ?? 0]}. ${q.e}`)
+    html = ex ? `<b>${at("liteExample")}: ${esc(L(ex, "title"))}</b>${codeBlock(ex.code)}<p class="small">→ ${esc(ex.out)}</p>`
+         : q ? mdAi(`**${at("liteExample")}:** ${qText(q)}\n**${at("answer")}:** ${ansOf(q)}. ${qExpl(q)}`)
          : mdAi(at("liteNoTopic")) + await wikiHtml(c.subject || "");
   } else if (kind === "check") {
-    html = f ? mdAi(`${at("liteCheck")}\n\n**${at("answer")}: ${f.o[f.a]}**\n${f.e || ""}`) : mdAi(at("noTask"));
+    html = f ? mdAi(`${at("liteCheck")}\n\n**${at("answer")}: ${ansOf(f)}**\n${L(f, "solution") || qExpl(f) || ""}`) : mdAi(at("noTask"));
   } else if (kind === "similar") {
-    const pool = t ? Object.values(topicLevels(t)).flat().filter(q => q.o && q.q !== f?.q && q.q !== nai.similarQ?.q) : [];
+    const pool = t ? Object.values(topicLevels(t)).flat().filter(q => q.q !== f?.q && q.q !== nai.similarQ?.q) : [];
     const q = pool[Math.floor(Math.random() * pool.length)];
     if (q) {
       nai.similarQ = q; nai.similar = q.q;
-      html = mdAi(`${at("liteSimilar")}\n\n**${q.q}**`) + (q.code ? codeBlock(q.code) : "") + `<ul>${q.o.map(o => `<li>${esc(o)}</li>`).join("")}</ul>`;
+      html = mdAi(`${at("liteSimilar")}\n\n**${qText(q)}**`) + (q.code ? codeBlock(q.code) : "") + (q.o ? `<ul>${qOpts(q).map(o => `<li>${esc(o)}</li>`).join("")}</ul>` : "");
     } else html = mdAi(at("noTask"));
   } else if (kind === "solution") {
     const q = nai.similarQ && nai.similar === nai.similarQ.q ? nai.similarQ : f;
-    html = q ? mdAi(`**${at("liteSolution")}:** ${q.o[q.a ?? 0]}\n\n${q.e || ""}`) : mdAi(at("noTask"));
+    html = q ? mdAi(`**${at("liteSolution")}:** ${ansOf(q)}\n\n${L(q, "solution") || qExpl(q) || ""}`) : mdAi(at("noTask"));
   } else {
     html = await liteSearch(userText, c);
   }
