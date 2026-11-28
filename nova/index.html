@@ -352,6 +352,33 @@ pre.code .blank { background: #ffd54a; color: #1b1b1b; padding: 0 4px; border-ra
 .example .io { display: flex; gap: 10px; flex-wrap: wrap; font-size: .85rem; }
 .example .io pre { margin: 4px 0 0; padding: 8px 12px; border-radius: 10px; background: var(--bg-2); font: 13px/1.4 ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; }
 .option.mono { font-family: ui-monospace, Menlo, Consolas, monospace; }
+
+/* ---------- NOVA AI ---------- */
+.ai-fab { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 30; display: flex; align-items: center; gap: 8px; padding: 12px 16px; border: 0; border-radius: 999px; background: var(--accent); color: #fff; font-weight: 800; font-size: .95rem; box-shadow: 0 8px 24px rgba(34, 160, 107, .4); cursor: pointer; transition: transform .2s var(--ease), opacity .2s; }
+.ai-fab:hover { transform: translateY(-2px); background: var(--accent-dark); }
+.ai-fab.hidden { opacity: 0; pointer-events: none; transform: scale(.8); }
+.ai-fab .fab-ico { font-size: 1.2rem; }
+.ai-quick { display: flex; gap: 6px; overflow-x: auto; padding: 8px 16px 0; scrollbar-width: none; }
+.ai-quick::-webkit-scrollbar { display: none; }
+.ai-quick button { flex: none; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 999px; padding: 6px 11px; font-size: .8rem; font-weight: 650; cursor: pointer; }
+.ai-quick button:hover { border-color: var(--accent); color: var(--accent-dark); }
+.ai-quick button.sol { background: var(--accent-light); border-color: transparent; color: var(--accent-dark); }
+.ai-limit { font-size: .75rem; font-weight: 700; color: var(--accent-dark); padding: 6px 16px; background: var(--accent-light); }
+.ai-limit.low { color: #9a5b00; background: #fff4dc; }
+.ai-load { display: grid; gap: 8px; min-width: 240px; }
+.ai-load .progress { margin: 0; }
+.ai-disc { margin-top: 8px; padding-top: 6px; border-top: 1px dashed #b8dcca; font-size: .74rem; color: var(--muted); }
+.lite-tag { font-weight: 800; color: #9a5b00; }
+.msg pre.code { font-size: 12.5px; margin: 8px 0; }
+.msg code { font-family: ui-monospace, Menlo, Consolas, monospace; background: rgba(0,0,0,.06); padding: 1px 5px; border-radius: 5px; font-size: .88em; }
+.msg pre.code code { background: none; padding: 0; }
+.msg ol { margin: 6px 0; padding-left: 22px; }
+.msg .h { font-size: 1rem; }
+.msg.bot { max-width: 100%; }
+.ai-ctx pre.code { font-size: 12px; }
+#aiStop { flex: none; }
+#aiStop[hidden] { display: none; }
+main.wrap { padding-bottom: 90px; }
 </style>
 </head>
 <body>
@@ -375,17 +402,27 @@ pre.code .blank { background: #ffd54a; color: #1b1b1b; padding: 0 4px; border-ra
 
 <main class="wrap"><div id="app"></div></main>
 
-<!-- AI-панель «Объясни ошибку» -->
+<!-- NOVA AI: кнопка на каждой странице и панель чата -->
+<button class="ai-fab" id="aiFab" type="button" aria-label="NOVA AI"><span class="fab-ico">🤖</span><span>NOVA AI</span></button>
 <div class="ai-backdrop" id="aiBackdrop"></div>
-<aside class="ai-panel" id="aiPanel" aria-label="AI-помощник" aria-hidden="true">
+<aside class="ai-panel" id="aiPanel" aria-label="NOVA AI" aria-hidden="true">
   <div class="ai-head">
-    <div><b>🤖 Объясни ошибку</b><small id="aiSub"></small></div>
-    <div class="row" style="gap:6px"><span class="ai-mode" id="aiMode"></span><button class="icon-btn" id="aiClose" aria-label="Закрыть">✕</button></div>
+    <div><b id="aiTitle">NOVA AI</b><small id="aiSub"></small></div>
+    <div class="row" style="gap:6px"><span class="ai-mode" id="aiMode"></span><button class="icon-btn" id="aiClose" aria-label="✕">✕</button></div>
   </div>
+  <div class="ai-limit" id="aiLimit" hidden></div>
   <div class="ai-body" id="aiBody"></div>
+  <div class="ai-quick">
+    <button type="button" data-quick="simpler"></button>
+    <button type="button" data-quick="example"></button>
+    <button type="button" data-quick="check"></button>
+    <button type="button" data-quick="similar"></button>
+    <button type="button" data-quick="solution" class="sol"></button>
+  </div>
   <form class="ai-foot" id="aiForm" autocomplete="off">
-    <input type="text" id="aiInput" placeholder="Задай уточняющий вопрос…" maxlength="500">
-    <button class="btn btn-primary" type="submit" aria-label="Отправить">➤</button>
+    <input type="text" id="aiInput" maxlength="1500">
+    <button class="btn btn-ghost" type="button" id="aiStop" hidden>■</button>
+    <button class="btn btn-primary" type="submit" aria-label="➤">➤</button>
   </form>
 </aside>
 
@@ -466,6 +503,15 @@ function highlightCpp(code) {
   return out + esc(code.slice(last));
 }
 const codeBlock = code => `<pre class="code"><code>${highlightCpp(code)}</code></pre>`;
+
+/* Язык интерфейса и доступ к полям данных (переводы подключаются позже) */
+const getLang = () => store.get("lang", "ru");
+const subjectName = s => s.name;
+const topicTitle = t => t.title;
+const topicExplain = t => t.explain;
+const topicLevels = t => t.levels;
+/** Что сейчас открыто — нужно NOVA AI для контекста. */
+let PAGE = {};
 
 const SUBJECTS = [
   { id: "math",        name: "Математика",       emoji: "🔢", color: "#22A06B", grades: [5, 6] },
@@ -585,6 +631,7 @@ async function router() {
   const parts = location.hash.replace(/^#\/?/, "").split("/").map(decodeURIComponent);
   const name = routes[parts[0]] ? parts[0] : "";
   if (name !== "q" && quiz) quiz = null; // ушли со страницы теста — тест сбрасывается
+  PAGE = {};
   $$(".top-nav a").forEach(a => a.classList.toggle("active", a.dataset.nav === (["s", "t", "q"].includes(name) ? "" : name)));
   const app = $("#app");
   app.innerHTML = `<div class="view"></div>`;
@@ -722,6 +769,7 @@ async function renderTopic(view, sid, grade, tid) {
   if (!s || !found) { location.hash = `#/s/${sid}/${grade}`; return; }
   const { topic, section } = found;
   const p = topicProgress(sid, grade, tid);
+  PAGE = { sid, grade: +grade, topic, section: section.title };
   view.innerHTML = `
     <nav class="crumbs"><a href="#/s/${sid}">${s.name}</a> › <a href="#/s/${sid}/${grade}">${grade} класс</a> › <span>${esc(topic.title)}</span></nav>
     ${modHead(s.emoji, esc(topic.title), esc(section.title), `#/s/${sid}/${grade}`)}
@@ -767,6 +815,7 @@ async function renderQuiz(view, sid, grade, tid, level) {
   const found = findTopic(data, grade, tid);
   const lv = levelById(level);
   if (!s || !found || !lv || !(found.topic.levels[level] || []).length) { location.hash = `#/t/${sid}/${grade}/${tid}`; return; }
+  PAGE = { sid, grade: +grade, topic: found.topic, section: found.section.title };
   const key = [sid, grade, tid, level].join("|");
   if (!quiz || quiz.key !== key) {
     const questions = shuffle(found.topic.levels[level]).map(q => {
@@ -854,10 +903,7 @@ function drawResult(view) {
   $$("[data-explain]", view).forEach(b => b.onclick = () => {
     const i = +b.dataset.explain;
     const q = quiz.questions[i];
-    openAi({
-      subject: s.name, grade: quiz.grade, level: lv.name, topic: quiz.topic.title, topicExplain: quiz.topic.explain,
-      q: q.q + (q.code ? "\n" + q.code : ""), options: q.o, picked: q.o[quiz.answers[i]], correct: q.o[q.a], e: q.e
-    });
+    openNovaAI({ ...q, picked: q.o[quiz.answers[i]] });
   });
 }
 
@@ -913,135 +959,6 @@ function renderWeakPoint(view) {
     </div>`}`;
   $$("[data-f]", view).forEach(b => b.onclick = () => { weakFilter = b.dataset.f; renderWeakPoint(view); });
 }
-
-/* =====================================================================
-   9. AI-ПОМОЩНИК «ОБЪЯСНИ ОШИБКУ»
-   Бесплатно и без ключей: пояснение из данных вопроса + статьи Википедии (API, origin=*).
-   ===================================================================== */
-const ai = { ctx: null, messages: [], busy: false };
-
-/** Простая разметка: **жирный**, списки, ссылки, переносы строк. */
-function md(text) {
-  const lines = esc(text).split("\n");
-  let html = "", inList = false;
-  for (const line of lines) {
-    const li = line.match(/^\s*(?:[-*•]|\d+[.)])\s+(.*)/);
-    if (li) { if (!inList) { html += "<ul>"; inList = true; } html += `<li>${li[1]}</li>`; continue; }
-    if (inList) { html += "</ul>"; inList = false; }
-    html += line.trim() ? line + "<br>" : "<br>";
-  }
-  if (inList) html += "</ul>";
-  return html
-    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
-    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
-    .replace(/(<br>){3,}/g, "<br><br>");
-}
-
-function sourcesHtml(list, title = "📚 Статьи по теме") {
-  if (!list?.length) return "";
-  return `<div class="sources"><b>${title}:</b>${list.map(s => `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)} ↗</a>`).join("")}</div>`;
-}
-
-function aiAdd(who, html) {
-  const body = $("#aiBody");
-  const div = document.createElement("div");
-  div.className = "msg " + who;
-  div.innerHTML = html;
-  body.appendChild(div);
-  body.scrollTop = body.scrollHeight;
-  return div;
-}
-function aiTyping() { return aiAdd("bot typing", "<span></span><span></span><span></span>"); }
-
-function openAi(ctx) {
-  ai.ctx = ctx; ai.messages = [];
-  $("#aiSub").textContent = `${ctx.subject} · ${ctx.grade} класс · ${ctx.level}`;
-  $("#aiMode").textContent = "бесплатно";
-  $("#aiBody").innerHTML = `
-    <div class="ai-ctx">
-      <p><b>${esc(ctx.q)}</b></p>
-      <p style="color:var(--danger)">Твой ответ: ${esc(ctx.picked)}</p>
-      <p style="color:var(--ok)">Правильно: ${esc(ctx.correct)}</p>
-    </div>`;
-  $("#aiPanel").classList.add("open");
-  $("#aiPanel").setAttribute("aria-hidden", "false");
-  $("#aiBackdrop").classList.add("open");
-  firstExplanation();
-}
-
-function closeAi() {
-  $("#aiPanel").classList.remove("open");
-  $("#aiPanel").setAttribute("aria-hidden", "true");
-  $("#aiBackdrop").classList.remove("open");
-}
-
-/** Первое объяснение — из материалов NOVA. */
-async function firstExplanation() { await localExplanation(); }
-
-async function localExplanation() {
-  const c = ai.ctx;
-  const levelTip = {
-    "Лёгкий": "Это вопрос на знание определения или правила — перечитай их и попробуй своими словами пересказать.",
-    "Средний": "Здесь нужно применить правило к задаче. Выпиши, что дано и что нужно найти, и подбери подходящую формулу или правило.",
-    "Сложный": "Задача в несколько шагов. Разбей её на маленькие шаги и проверь каждый отдельно — ошибка часто прячется в промежуточном вычислении.",
-    "Олимпиадный": "В олимпиадных задачах важна идея. Попробуй рассмотреть частный случай, нарисовать схему или проверить ответ подстановкой."
-  }[c.level] || "";
-  aiAdd("bot", md(`**Почему «${c.picked}» — неверно.**\nПравильный ответ: **${c.correct}**.\n\n${c.e}\n\n**Вспомни теорию:** ${c.topicExplain.replace(/\n/g, " ")}\n\n**Совет:** ${levelTip}`) +
-    `<p class="small muted" style="margin:6px 0 0">Объяснение из материалов NOVA.</p>`);
-  const t = aiTyping();
-  const links = await wikiSearch(`${c.topic} ${c.subject === "Английский язык" ? "грамматика английского языка" : ""}`.trim());
-  t.remove();
-  aiAdd("bot", sourcesHtml(links.length ? links : [wikiSearchLink(c.topic)]));
-}
-
-/* --- Википедия (без ключа) --- */
-async function wikiSearch(query, limit = 3) {
-  try {
-    const url = "https://ru.wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srlimit=" + limit + "&srsearch=" + encodeURIComponent(query);
-    const r = await fetch(url);
-    const d = await r.json();
-    return (d.query?.search || []).map(x => ({ title: "Википедия: " + x.title, url: "https://ru.wikipedia.org/wiki/" + encodeURIComponent(x.title.replace(/ /g, "_")), raw: x.title }));
-  } catch (e) { return []; }
-}
-/** Ссылка на поиск по Википедии — работает, даже если API недоступен. */
-function wikiSearchLink(query) {
-  return { title: "Поиск в Википедии: " + query, url: "https://ru.wikipedia.org/w/index.php?search=" + encodeURIComponent(query) };
-}
-async function wikiExtract(title) {
-  try {
-    const url = "https://ru.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=1&explaintext=1&exsentences=3&format=json&origin=*&titles=" + encodeURIComponent(title);
-    const d = await (await fetch(url)).json();
-    const page = Object.values(d.query?.pages || {})[0];
-    return page?.extract || "";
-  } catch (e) { return ""; }
-}
-
-async function localFollowUp(question) {
-  const t = aiTyping();
-  const links = await wikiSearch(`${question} ${ai.ctx.topic}`);
-  let found = links.length ? links : await wikiSearch(question);
-  if (!found.length) found = [wikiSearchLink(question)];
-  const extract = found[0]?.raw ? await wikiExtract(found[0].raw) : "";
-  t.remove();
-  aiAdd("bot", (extract ? md(`Вот что пишет Википедия («${found[0].raw}»):\n${extract}`) : md("Вот статьи, которые помогут разобраться.")) +
-    sourcesHtml(found));
-}
-
-/* Обработчики панели */
-$("#aiClose").onclick = closeAi;
-$("#aiBackdrop").onclick = closeAi;
-document.addEventListener("keydown", e => { if (e.key === "Escape") closeAi(); });
-$("#aiForm").onsubmit = async e => {
-  e.preventDefault();
-  const input = $("#aiInput");
-  const text = input.value.trim();
-  if (!text || ai.busy || !ai.ctx) return;
-  input.value = "";
-  aiAdd("me", esc(text));
-  ai.busy = true;
-  await localFollowUp(text);
-  ai.busy = false;
-};
 
 /* =====================================================================
    10. НАСТРОЙКИ
@@ -1504,5 +1421,6 @@ function renderTeam(view) {
   router();
 })();
 </script>
+<script src="js/ai.js"></script>
 </body>
 </html>
