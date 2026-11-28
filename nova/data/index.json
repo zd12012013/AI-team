@@ -43,5 +43,17 @@
   "topics": 72,
   "questions": 866,
   "check": 6
+ },
+ "chemistry": {
+  "grades": {
+   "7": 8,
+   "8": 9,
+   "9": 9,
+   "10": 8,
+   "11": 7
+  },
+  "topics": 41,
+  "questions": 492,
+  "check": 6
  }
 }
