@@ -108,6 +108,37 @@ const MOCK = () => {
     await page.close();
   }
 
+  // ---------- 4. Лимит и Premium ----------
+  console.log("4) Лимит 20 сообщений в день и NOVA Premium (демо)");
+  {
+    const page = await browser.newPage();
+    const errs = []; page.on("pageerror", e => errs.push(e.message));
+    await page.addInitScript(() => { window.NOVA_AI_FORCE_LITE = true; });
+    await page.goto(BASE + "#/t/physics/7/p7-density"); await page.waitForSelector(".explain-card");
+    const day = await page.evaluate(() => todayKey());
+    // вчерашний счётчик не считается — новый день начинается с 20
+    await page.evaluate(() => localStorage.setItem("nova.ai.usage", JSON.stringify({ day: "2000-01-01", n: 20 })));
+    await page.click("#aiFab"); await page.waitForSelector("#aiPanel.open");
+    ok((await page.textContent("#aiLimit")).includes("Осталось сегодня: 20"), "Сброс в полночь: новый день — снова 20");
+    await page.evaluate(d => localStorage.setItem("nova.ai.usage", JSON.stringify({ day: d, n: 19 })), day);
+    await page.click("[data-quick=simpler]"); await page.waitForFunction(() => document.querySelectorAll(".msg.bot .ai-disc").length >= 1);
+    ok((await page.textContent("#aiLimit")).includes("Осталось сегодня: 0"), "Счётчик над чатом уменьшается");
+    await page.click("[data-quick=example]"); await page.waitForSelector(".limit-card");
+    ok((await page.textContent(".limit-card")).includes("Лимит на сегодня исчерпан"), "Карточка «Лимит на сегодня исчерпан»");
+    await page.click(".limit-card a"); await page.waitForSelector(".plans");
+    ok((await page.locator(".plan").count()) === 3, "Страница Premium: Free / Premium / Школа");
+    await page.click("#tryPremium"); await page.waitForSelector("#toFree");
+    await page.goto(BASE + "#/t/physics/7/p7-density"); await page.waitForSelector(".explain-card");
+    await page.click("#aiFab"); await page.waitForSelector("#aiPanel.open");
+    ok((await page.textContent("#aiLimit")).includes("без ограничений"), "После «Попробовать Premium (демо)» лимита нет");
+    const before = await page.locator(".msg.bot .ai-disc").count();
+    await page.click("[data-quick=simpler]"); await page.waitForFunction(n => document.querySelectorAll(".msg.bot .ai-disc").length > n, before);
+    ok(true, "Сообщения снова отправляются");
+    ok(errs.length === 0, "Нет ошибок JS" + (errs.length ? ": " + errs.join("; ") : ""));
+    if (process.env.SHOTS) { await page.goto(BASE + "#/premium"); await page.waitForSelector(".plans"); await page.setViewportSize({ width: 1280, height: 900 }); await page.screenshot({ path: process.env.SHOTS + "/premium.png", fullPage: true }); }
+    await page.close();
+  }
+
   // ---------- 3. Настоящая библиотека WebLLM ----------
   if (process.env.WEBLLM_LOCAL) {
     console.log("3) Настоящий WebLLM из локальной копии, модель недоступна → упрощённый режим");

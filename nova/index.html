@@ -379,6 +379,23 @@ pre.code .blank { background: #ffd54a; color: #1b1b1b; padding: 0 4px; border-ra
 #aiStop { flex: none; }
 #aiStop[hidden] { display: none; }
 main.wrap { padding-bottom: 90px; }
+
+/* ---------- NOVA Premium ---------- */
+.plans { display: grid; gap: 14px; grid-template-columns: 1fr; }
+@media (min-width: 860px) { .plans { grid-template-columns: repeat(3, 1fr); align-items: start; } }
+.plan { position: relative; display: flex; flex-direction: column; gap: 6px; }
+.plan.featured { border: 2px solid var(--accent); box-shadow: 0 10px 30px rgba(34, 160, 107, .15); }
+.plan.current { background: linear-gradient(180deg, var(--accent-light), #fff 40%); }
+.plan .price { font-size: 1.6rem; font-weight: 850; color: var(--accent-dark); }
+.plan-badge { position: absolute; top: 14px; right: 14px; }
+.plan .feat { list-style: none; padding: 0; margin: 8px 0 12px; display: grid; gap: 7px; font-size: .9rem; }
+.plan .feat li { display: flex; gap: 8px; align-items: baseline; }
+.plan .feat li > span:first-child { flex: none; min-width: 18px; font-weight: 800; }
+.plan .feat .yes { color: var(--ok); }
+.plan .feat li.off { color: var(--muted); }
+.plan .feat li:not(.off) > span:first-child:not(.yes) { color: var(--accent-dark); font-size: .8rem; }
+.demo-note { background: #fff4dc; color: #7a4a00; border-radius: 12px; padding: 10px 14px; font-size: .88rem; font-weight: 600; }
+.msg.limit-card { background: #fff4dc; }
 </style>
 </head>
 <body>
@@ -395,6 +412,7 @@ main.wrap { padding-bottom: 90px; }
       <a href="#/weak" data-nav="weak">🧠<span class="lbl"> WeakPoint</span></a>
       <a href="#/tasks" data-nav="tasks">📅<span class="lbl"> Задачи</span></a>
       <a href="#/team" data-nav="team">🤝<span class="lbl"> Команда</span></a>
+      <a href="#/premium" data-nav="premium">✦<span class="lbl"> Premium</span></a>
       <a href="#/settings" data-nav="settings">⚙️<span class="lbl"> Настройки</span></a>
     </nav>
   </div>
@@ -1421,6 +1439,7 @@ function renderTeam(view) {
   router();
 })();
 </script>
+<script src="js/limit.js"></script>
 <script src="js/ai.js"></script>
 </body>
 </html>

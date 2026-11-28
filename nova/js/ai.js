@@ -238,7 +238,8 @@ async function openNovaAI(focus = null) {
   $("#aiFab").classList.add("hidden");
   aiHeader();
   if (!nai.mode) await startEngine();
-  if (focus && !nai.history.length && aiCanSend()) aiAsk("why");
+  if (!aiCanSend()) return aiLimitCard();
+  if (focus && !nai.history.length) aiAsk("why");
 }
 
 function closeNovaAI() {
