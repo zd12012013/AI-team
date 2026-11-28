@@ -1,4 +1,16 @@
 {
+ "algebra": {
+  "grades": {
+   "7": 11,
+   "8": 9,
+   "9": 11,
+   "10": 10,
+   "11": 9
+  },
+  "topics": 50,
+  "questions": 601,
+  "check": 8
+ },
  "physics": {
   "grades": {
    "7": 17,
