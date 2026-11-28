@@ -67,5 +67,17 @@
   "topics": 37,
   "questions": 444,
   "check": 12
+ },
+ "geography": {
+  "grades": {
+   "7": 6,
+   "8": 6,
+   "9": 7,
+   "10": 6,
+   "11": 6
+  },
+  "topics": 31,
+  "questions": 372,
+  "check": 22
  }
 }
