@@ -1,4 +1,13 @@
 {
+ "math": {
+  "grades": {
+   "5": 9,
+   "6": 9
+  },
+  "topics": 18,
+  "questions": 216,
+  "check": 2
+ },
  "algebra": {
   "grades": {
    "7": 11,
