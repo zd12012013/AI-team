@@ -11,6 +11,18 @@
   "questions": 601,
   "check": 8
  },
+ "geometry": {
+  "grades": {
+   "7": 9,
+   "8": 8,
+   "9": 7,
+   "10": 8,
+   "11": 6
+  },
+  "topics": 38,
+  "questions": 456,
+  "check": 5
+ },
  "physics": {
   "grades": {
    "7": 17,
