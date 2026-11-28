@@ -38,7 +38,7 @@ MIN_QUESTIONS = 3
 
 
 def check_subject(sid, data):
-    errors, stats = [], {"topics": 0, "questions": 0, "check": 0}
+    errors, stats = [], {"topics": 0, "questions": 0, "check": 0, "kz": 0}
     if data.get("id") != sid:
         errors.append(f"поле id должно быть «{sid}»")
     ids = set()
@@ -52,6 +52,7 @@ def check_subject(sid, data):
                 where = f"{grade} кл / {t.get('id', '?')}"
                 stats["topics"] += 1
                 stats["check"] += 1 if t.get("check") else 0
+                stats["kz"] += 1 if t.get("kz") else 0
                 if t.get("id") in ids:
                     errors.append(f"{where}: повторяющийся id темы")
                 ids.add(t.get("id"))
@@ -68,10 +69,19 @@ def check_subject(sid, data):
                         a = q.get("a", 0)
                         if not q.get("q") or not q.get("e"):
                             errors.append(f"{where}/{lv}#{n}: нужен текст вопроса (q) и пояснение (e)")
-                        if len(o) < 2 or not (0 <= a < len(o)):
-                            errors.append(f"{where}/{lv}#{n}: нужны варианты (o) и верный индекс ответа (a)")
+                        if "answer" in q:            # задача с вводом ответа
+                            if o:
+                                errors.append(f"{where}/{lv}#{n}: у задачи с вводом (answer) не должно быть вариантов o")
+                        elif len(o) < 2 or not (0 <= a < len(o)):
+                            errors.append(f"{where}/{lv}#{n}: нужны варианты (o) и верный индекс ответа (a) или поле answer")
                         if len(set(map(str.strip, o))) != len(o):
                             errors.append(f"{where}/{lv}#{n}: повторяются варианты ответа")
+                        kz = q.get("kz")
+                        if kz:
+                            if o and len(kz.get("o", [])) != len(o):
+                                errors.append(f"{where}/{lv}#{n}: в kz.o должно быть столько же вариантов, сколько в o")
+                            if not kz.get("q"):
+                                errors.append(f"{where}/{lv}#{n}: в kz нет текста вопроса (q)")
     return errors, stats
 
 
@@ -87,14 +97,14 @@ def main():
         all_errors += [f"{sid}: {e}" for e in errors]
         index[sid] = {
             "grades": {g: sum(len(s["topics"]) for s in c["sections"]) for g, c in data["classes"].items()},
-            "topics": stats["topics"], "questions": stats["questions"], "check": stats["check"],
+            "topics": stats["topics"], "questions": stats["questions"], "check": stats["check"], "kz": stats["kz"],
         }
         (OUT_JS / f"{sid}.js").write_text(
             "// АВТОМАТИЧЕСКИ СОЗДАННЫЙ ФАЙЛ — не редактируй! Источник: data/%s.json\n"
             "(window.NOVA_DATA = window.NOVA_DATA || {})[%s] = %s;\n"
             % (sid, json.dumps(sid), json.dumps(data, ensure_ascii=False)), encoding="utf-8")
         print(f"  {sid:12} классов: {len(data['classes'])}, тем: {stats['topics']}, "
-              f"вопросов: {stats['questions']}, на проверку: {stats['check']}")
+              f"вопросов: {stats['questions']}, на проверку: {stats['check']}, на казахском: {stats['kz']}")
     if all_errors:
         print("\nОШИБКИ В ДАННЫХ:")
         for e in all_errors:
